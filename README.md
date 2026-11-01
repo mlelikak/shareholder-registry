@@ -178,7 +178,7 @@ TODO: diagram.
 
 ## Run locally
 
-TODO: exact commands once the project is scaffolded.
+TODO: website commands. Contract tests: `cargo test` in `contract/`. Full exit on testnet with real token transfers: `bash scripts/e2e-exit.sh <suffix> <funded-testnet-account>`.
 
 ## Tests
 
@@ -211,6 +211,7 @@ TODO: list of contract tests, including:
 
 - The contract runs on testnet. The Intents payout uses mainnet with a tiny amount from the builder's own wallet, because Intents runs on mainnet, so that transfer is scaled down from the investor's calculated share.
 - An investor who never confirms their share count is held, not paid. That is the safe default, but in a real exit it means more follow-up.
+- An open payout event can't be cancelled, and a correction can only involve holders already on the register.
 - In the demo, an open dispute blocks the whole payout. Production could hold just the disputed share and pay everyone else.
 - Payouts are processed in one transaction, suited to a demo of up to ~10 investors. Production needs batching.
 - Bank verification, KYC checks, text messages, emails and bank payouts are simulated.

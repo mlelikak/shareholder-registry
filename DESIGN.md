@@ -61,7 +61,7 @@ All roles are NEAR testnet accounts. Investors and helpers get theirs invisibly 
 | Caretaker agent's key | `flag_holder`, `pause_holder`, `freeze_holder`, `log_agent_action` | Change payout details, approve transfers, move funds |
 | KYC provider's key | `record_kyc` | Anything else |
 | Investor's phone key | `register_holder`, `confirm_details`, `confirm_holding`, `record_contact_change`, `request_payout_change`, `cancel_payout_change`, `add_helper`, `remove_helper`, `claim` | Anything else on the account |
-| Payout service's key | `release_for_route`, `report_route_result` | Choose destinations (it can only send to a holder's registered, active route), change details |
+| Payout service's key | `release_for_route`, `report_route_result` | Choose destinations, collect ordinary payments, be repaid twice, change details |
 | Estate reviewer's key | `approve_transfer`, `unfreeze_holder` | Change payout details, set share counts, move funds other than to the approved successor |
 
 The demo shows the agent's key being **rejected by the network** when it tries to redirect money.
@@ -99,7 +99,7 @@ The demo shows the agent's key being **rejected by the network** when it tries t
 - `company_id`, `total` (amount to distribute, in the token's smallest units), `record_date` (the moment `open_payout` ran, set by the contract; it cannot look back to an earlier date)
 - `snapshot` — map of investor account → shares, frozen at the record date; transfers after it don't change this payout
 - `confirmations` — map of investor account → `unconfirmed` (the starting value, and again after a correction), `confirmed` or `disputed` (with the number the investor gave)
-- `outcomes` — map of investor account → `in_flight`, `paid`, `queued` or `held`, set at execution and updated as transfers finish
+- `lines` — map of investor account → shares, amount and outcome, set at execution and updated as transfers finish. Outcomes: `in_flight`, `awaiting_route`, `released`, `settling`, `paid`, `queued` or `held`
 - `funded` — amount received for this event
 - `state` — `preparing`, `funded` or `executed`
 - `manifest_root` — set at execution (section 7d)
@@ -142,7 +142,7 @@ Status is calculated when read, so it is always current.
 - Cancel a pending change → `cancel_payout_change({ holder_id })` — allowed for the investor **and their helpers**
 - Add or remove a helper → `add_helper({ helper_id })`, `remove_helper({ helper_id })` (both use the normal waiting period and alert every current helper, so a scammer can't add themselves or coach the investor into removing the real helper; a helper being removed can still cancel changes until the wait ends) Pending payout changes and helper changes take effect only while the holder is `active`; they wait during a pause or freeze.
 - Confirm their share count for a payout event → `confirm_holding({ event_id, shares })` — a match records `confirmed`; a different number records `disputed` and flags the holder for the agent and the company admin. A holder whose money was held can still confirm after execution; if they dispute at that point, the money stays held and the case goes to the company admin
-- Claim held money → `claim({ company_id })` (requires a recent confirmation, a `confirmed` share count, valid KYC, clear screening and state `active`, the same gate as a payout; pays the currently active route)
+- Claim held money → `claim({ company_id, holder_id? })` (an approved successor passes the original holder) (requires a recent confirmation, a `confirmed` share count, valid KYC, clear screening and state `active`, the same gate as a payout; pays the currently active route)
 
 **Caretaker agent** (restricted key)
 - Flag a holder for attention → `flag_holder({ holder_id, reason_hash })` (only a hash goes on-chain, so the chain never says why)
@@ -170,7 +170,7 @@ Status is calculated when read, so it is always current.
 - Run the payout → `execute_payout({ event_id })` — runs the checks in section 7d; if any fails, nothing is paid
 - Collect the rounding remainder → `collect_remainder({ company_id })` — company admin only, paid to the admin account
 
-**Read-only (free):** `get_holder`, `get_status`, `get_company`, `get_register`, `get_held_funds`, `get_payout`
+**Read-only (free):** `get_holder`, `get_status`, `get_company`, `get_register`, `get_held_funds`, `get_payout`, `get_readiness`, `get_remainder`, `get_manifest_proof`, `verify_manifest_line`
 
 **Events** (NEP-297 log format): `payout_opened`, `holding_confirmed`, `holding_disputed`, `payout_manifest`, `payout_settled`, `payout_change_requested`, `payout_change_cancelled`, `payout_change_effective`, `helper_add_requested`, `helper_added`, `helper_removal_requested`, `helper_removed`, `payout_paid`, `payout_held`, `holder_flagged`, `holder_paused`, `agent_action`, `holder_frozen`, `holder_unfrozen`, `holder_transferred`, `kyc_recorded`. Events carry no amounts beyond what the token transfer itself shows, and never a reason. The website turns these into alerts for the investor and their helpers.
 
@@ -181,13 +181,15 @@ Status is calculated when read, so it is always current.
 2. **Checks, then split.** On `execute_payout`, the contract runs every check in section 7d and splits the total by the snapshot using integer arithmetic. No AI touches the amounts.
 3. For each investor:
    - 🟢 or 🟡, share count `confirmed`, method `near` → paid to their **currently active** NEAR account.
-   - 🟢 or 🟡, share count `confirmed`, method `intents` → the contract releases the share to the **payout service**, which requests a NEAR Intents 1Click quote for the holder's chosen chain and token, sends the share to the returned deposit address, and polls until the status is final. Success is recorded as paid; failure or refund comes back to the contract and is recorded as **held**, never paid. Quotes are valid for about 10 minutes, so the service quotes just before sending.
+   - 🟢 or 🟡, share count `confirmed`, method `intents` → the contract gives the holder's active route to the **payout service** but keeps the money. The service requests a NEAR Intents 1Click quote for the holder's chosen chain and token, delivers from its own funds, and polls until the status is final. On success the contract repays the service and records the line as paid; failure or refund is recorded as **held**, never paid. A line can only be reported once, and only if it was released for a route. Quotes are valid for about 10 minutes, so the service quotes just before sending.
    - 🟢 or 🟡, share count `confirmed`, method `bank` → recorded as queued for the licensed payment partner (simulated in the demo).
    - 🔴, paused, frozen or share count not `confirmed` → recorded as held funds. **No one is paid without valid KYC, clear screening and a confirmed share count**; their share is held until they come back and the gap is closed. An investor who never answers is held, not paid, so the company can't quietly change a silent holder's shares.
 4. A held investor comes back, confirms their details and share count, and claims.
 5. **Proof.** During `execute_payout`, before any money moves, the contract calculates the manifest root and emits `payout_manifest` (section 7d). Transfers finish later, so each line starts `in_flight`, `queued` or `held`; a failed transfer becomes held, never paid. When the last one finishes, `payout_settled` gives the final counts paid, queued and held.
 
-The payout service holds a restricted key that can only call `release_for_route` and `report_route_result`, and can only send to the holder's registered, active route. It cannot choose destinations.
+The payout service holds a restricted key that can only call `release_for_route` and `report_route_result`. It can never touch an ordinary payment, and the money stays in the contract until delivery succeeds.
+
+A held investor on the `intents` route is paid to their own NEAR account when they claim, because a failed route should not be retried automatically. On the `bank` route, a claim is queued.
 
 Demo size: 5–10 investors. Production needs batching to stay within NEAR's per-transaction limits.
 
@@ -399,6 +401,7 @@ Honest list, for the README and judges:
 - **Async transfers:** token transfers from a contract complete in a callback; a failure must become "held", never "paid".
 - **Testnet, with one exception:** the contract runs on testnet. Intents payouts likely need **mainnet**; they use tiny amounts from the builder's own wallet, and the builder confirms every mainnet transaction. Confirmed Oct 24–25: Intents has no testnet; the 1Click API key is optional (without one, +0.25% fee).
 - **Intents edge cases:** quotes expire (~10 minutes); statuses SUCCESS, FAILED, REFUNDED, INCOMPLETE_DEPOSIT must all map to paid or held.
+- **Known limits of the demo contract:** an open payout has no cancel; a holder who disputes and never agrees blocks it until the company resolves it; a correction can only involve holders already on the register.
 - **Euro stablecoin availability:** whether EURC (or another MiCA-compliant euro stablecoin) is available on NEAR and in Intents is unconfirmed; the payout token is a setting, and the demo uses a test euro token on testnet.
 
 ## 14. Hackathon tracks
