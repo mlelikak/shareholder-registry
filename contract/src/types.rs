@@ -25,6 +25,7 @@ pub struct Roles {
     pub kyc_provider: AccountId,
     pub agent: AccountId,
     pub estate_reviewer: AccountId,
+    pub payout_service: AccountId,
 }
 
 #[near(serializers = [borsh, json])]
@@ -161,4 +162,127 @@ pub struct RegisterLine {
     pub shares: u64,
     pub status: Option<Status>,
     pub state: Option<HolderState>,
+}
+
+// ---------- Payout events ----------
+
+#[near(serializers = [borsh, json])]
+#[serde(rename_all = "snake_case")]
+#[derive(Clone, PartialEq, Debug)]
+pub enum Confirmation {
+    Unconfirmed,
+    Confirmed,
+    /// The number the investor gave.
+    Disputed { shares: u64 },
+}
+
+#[near(serializers = [borsh, json])]
+#[serde(rename_all = "snake_case")]
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum PayoutState {
+    Preparing,
+    Funded,
+    Executed,
+}
+
+#[near(serializers = [borsh, json])]
+#[serde(rename_all = "snake_case")]
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum Outcome {
+    InFlight,
+    AwaitingRoute,
+    Released,
+    Settling,
+    Paid,
+    Queued,
+    Held,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Line {
+    pub shares: u64,
+    #[serde(with = "u128_string")]
+    pub amount: u128,
+    pub outcome: Outcome,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct PayoutEvent {
+    pub company_id: String,
+    #[serde(with = "u128_string")]
+    pub total: u128,
+    pub record_date: u64,
+    pub snapshot: BTreeMap<AccountId, u64>,
+    pub confirmations: BTreeMap<AccountId, Confirmation>,
+    #[serde(with = "u128_string")]
+    pub funded: u128,
+    pub state: PayoutState,
+    pub manifest_root: Option<String>,
+    #[serde(with = "u128_string")]
+    pub remainder: u128,
+    pub lines: BTreeMap<AccountId, Line>,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct Correction {
+    pub holder_id: AccountId,
+    pub shares: u64,
+}
+
+#[near(serializers = [json])]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum RouteResult {
+    Success,
+    Failed,
+    Refunded,
+    IncompleteDeposit,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct PayoutTotals {
+    #[serde(with = "u128_string")]
+    pub paid: u128,
+    #[serde(with = "u128_string")]
+    pub queued: u128,
+    #[serde(with = "u128_string")]
+    pub held: u128,
+    #[serde(with = "u128_string")]
+    pub in_flight: u128,
+    #[serde(with = "u128_string")]
+    pub remainder: u128,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct PayoutView {
+    pub event: PayoutEvent,
+    pub totals: PayoutTotals,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct ReadinessLine {
+    pub holder_id: AccountId,
+    pub shares: u64,
+    pub confirmation: Confirmation,
+    pub status: Status,
+    pub ready: bool,
+}
+
+/// Sends large amounts as text, because JavaScript can't hold them as numbers.
+mod u128_string {
+    use near_sdk::serde::{Deserialize, Deserializer, Serializer, de::Error};
+
+    pub fn serialize<S: Serializer>(value: &u128, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&value.to_string())
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<u128, D::Error> {
+        String::deserialize(d)?.parse().map_err(D::Error::custom)
+    }
 }

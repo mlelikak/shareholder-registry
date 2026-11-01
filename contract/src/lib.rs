@@ -5,11 +5,16 @@ use near_sdk::serde_json::{Value, json};
 use near_sdk::store::LookupMap;
 use near_sdk::{AccountId, BorshStorageKey, PanicOnDefault, env, near, require};
 
+mod manifest;
+mod payouts;
 mod types;
+pub use manifest::ProofStep;
 pub use types::*;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod payout_tests;
 
 #[near]
 #[derive(BorshStorageKey)]
@@ -17,6 +22,11 @@ enum StorageKey {
     Holders,
     BankVerifications,
     Companies,
+    Payouts,
+    Held,
+    HeldEvents,
+    Remainders,
+    QueuedClaims,
 }
 
 #[near(contract_state)]
@@ -27,6 +37,11 @@ pub struct Contract {
     holders: LookupMap<AccountId, Holder>,
     bank_verifications: LookupMap<AccountId, BankVerification>,
     companies: LookupMap<String, Company>,
+    payouts: LookupMap<String, PayoutEvent>,
+    held: LookupMap<(String, AccountId), u128>,
+    held_events: LookupMap<(String, AccountId), Vec<String>>,
+    remainders: LookupMap<String, u128>,
+    queued_claims: LookupMap<(String, AccountId), u128>,
 }
 
 /// Writes a NEP-297 event. Callers pass only neutral data, never a reason.
@@ -128,6 +143,11 @@ impl Contract {
             holders: LookupMap::new(StorageKey::Holders),
             bank_verifications: LookupMap::new(StorageKey::BankVerifications),
             companies: LookupMap::new(StorageKey::Companies),
+            payouts: LookupMap::new(StorageKey::Payouts),
+            held: LookupMap::new(StorageKey::Held),
+            held_events: LookupMap::new(StorageKey::HeldEvents),
+            remainders: LookupMap::new(StorageKey::Remainders),
+            queued_claims: LookupMap::new(StorageKey::QueuedClaims),
         }
     }
 

@@ -25,6 +25,7 @@ fn roles() -> Roles {
         kyc_provider: account("kyc"),
         agent: account("agent"),
         estate_reviewer: account("reviewer"),
+        payout_service: account("service"),
     }
 }
 
