@@ -1,0 +1,22 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.near-credentials/
+
+# Build output and dependencies
+node_modules/
+target/
+.next/
+out/
+dist/
+build/
+*.wasm
+
+# Editor and system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
