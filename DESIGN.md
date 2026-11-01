@@ -140,17 +140,17 @@ Status is calculated when read, so it is always current.
   - Waiting period is `EXTENDED_COOLING_OFF` if this is the first-ever change **or** contact details changed within `RECENT_CONTACT_CHANGE`; otherwise `COOLING_OFF`.
   - Until it takes effect, payouts go to the current account.
 - Cancel a pending change → `cancel_payout_change({ holder_id })` — allowed for the investor **and their helpers**
-- Add or remove a helper → `add_helper({ helper_id })`, `remove_helper({ helper_id })` (both use the normal waiting period and alert every current helper, so a scammer can't add themselves or coach the investor into removing the real helper; a helper being removed can still cancel changes until the wait ends)
+- Add or remove a helper → `add_helper({ helper_id })`, `remove_helper({ helper_id })` (both use the normal waiting period and alert every current helper, so a scammer can't add themselves or coach the investor into removing the real helper; a helper being removed can still cancel changes until the wait ends) Pending payout changes and helper changes take effect only while the holder is `active`; they wait during a pause or freeze.
 - Confirm their share count for a payout event → `confirm_holding({ event_id, shares })` — a match records `confirmed`; a different number records `disputed` and flags the holder for the agent and the company admin. A holder whose money was held can still confirm after execution; if they dispute at that point, the money stays held and the case goes to the company admin
 - Claim held money → `claim({ company_id })` (requires a recent confirmation, a `confirmed` share count, valid KYC, clear screening and state `active`, the same gate as a payout; pays the currently active route)
 
 **Caretaker agent** (restricted key)
-- Flag a holder for attention, with a reason code → `flag_holder({ holder_id, reason })`
-- Pause a holder's payouts until a human or the holder resolves it → `pause_holder({ holder_id, reason })` (payouts for a paused holder are held, never redirected)
+- Flag a holder for attention → `flag_holder({ holder_id, reason_hash })` (only a hash goes on-chain, so the chain never says why)
+- Pause a holder's payouts until a human or the holder resolves it → `pause_holder({ holder_id, reason_hash })` (payouts for a paused holder are held, never redirected)
 - Record what it did, for the audit trail → `log_agent_action({ holder_id, action, summary_hash })` (the readable summary stays off-chain; the chain holds its hash so it can be proven later)
 
 **Freezing and transfers (used when a shareholder dies)**
-- Freeze a holder → `freeze_holder({ holder_id })` — allowed for the holder's helpers, the company admin or the agent. No reason is recorded on-chain. No changes; all payouts held.
+- Freeze a holder → `freeze_holder({ holder_id, company_id? })` — allowed for the holder's helpers, the agent, or the admin of a company the holder has shares in (naming that company). No reason is recorded on-chain. No changes; all payouts held.
 - Approve a transfer → `approve_transfer({ holder_id, new_account })` — only the estate reviewer may call this, and only for a frozen holder. Held funds and future payouts go to the successor's verified account (e.g. the estate); later, holdings can be split to heirs after the inheritance is divided.
 - Lift a freeze made by mistake → `unfreeze_holder({ holder_id })` — only the human estate reviewer may call this. A wrong or malicious freeze never locks money for good; the agent and helpers can freeze but can never unfreeze.
 
@@ -172,7 +172,7 @@ Status is calculated when read, so it is always current.
 
 **Read-only (free):** `get_holder`, `get_status`, `get_company`, `get_register`, `get_held_funds`, `get_payout`
 
-**Events** (NEP-297 log format): `payout_opened`, `holding_confirmed`, `holding_disputed`, `payout_manifest`, `payout_settled`, `payout_change_requested`, `payout_change_cancelled`, `payout_change_effective`, `helper_added`, `helper_removal_requested`, `helper_removed`, `payout_paid`, `payout_held`, `holder_flagged`, `holder_paused`, `agent_action`, `holder_frozen`, `holder_unfrozen`, `holder_transferred`, `kyc_recorded`. Events carry no amounts beyond what the token transfer itself shows, and never a reason. The website turns these into alerts for the investor and their helpers.
+**Events** (NEP-297 log format): `payout_opened`, `holding_confirmed`, `holding_disputed`, `payout_manifest`, `payout_settled`, `payout_change_requested`, `payout_change_cancelled`, `payout_change_effective`, `helper_add_requested`, `helper_added`, `helper_removal_requested`, `helper_removed`, `payout_paid`, `payout_held`, `holder_flagged`, `holder_paused`, `agent_action`, `holder_frozen`, `holder_unfrozen`, `holder_transferred`, `kyc_recorded`. Events carry no amounts beyond what the token transfer itself shows, and never a reason. The website turns these into alerts for the investor and their helpers.
 
 ## 7. How a payout works
 
