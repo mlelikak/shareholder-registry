@@ -1,5 +1,5 @@
 {
-  "name": "hello-near",
+  "name": "shareholder-registry-web",
   "version": "1.0.0",
   "private": true,
   "engines": {
@@ -12,12 +12,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@hot-labs/near-connect": "^0.11.4",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
-    "bootstrap": "^5.3.8",
-    "bootstrap-icons": "^1.13.2",
-    "function-call-key-plugin": "^2.1.0",
     "near-api-js": "^7.4.0",
     "next": "^16.4.3",
     "react": "^19.3.1",

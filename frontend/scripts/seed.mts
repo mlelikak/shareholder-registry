@@ -108,6 +108,7 @@ async function main() {
   const verifier = await createNamed('verifier', 0.15);
   const reviewer = await createNamed('reviewer', 0.15);
   const payoutService = await createNamed('svc', 0.25);
+  const attacker = await createNamed('attacker', 0.1);
 
   // The agent account gets ONLY a function-call key limited to its four methods
   // on the registry. No full-access key exists, so nothing else can be signed.
@@ -248,6 +249,7 @@ async function main() {
     reviewer,
     payoutService,
     agent: { accountId: agentId, privateKey: agentKey.toString(), allowedMethods: AGENT_METHODS },
+    attacker,
     cast,
   };
   saveDeployment(deployment);

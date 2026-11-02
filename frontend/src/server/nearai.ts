@@ -3,6 +3,8 @@
 // the gateway and don't link to a model attestation (checked Nov 1).
 
 import { createHash, randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 
@@ -11,6 +13,15 @@ const BASE = 'https://cloud-api.near.ai/v1';
 export const MODEL = process.env.NEAR_AI_MODEL ?? 'z-ai/glm-5.3-flash';
 
 function apiKey(): string {
+  if (!process.env.NEAR_AI_API_KEY) {
+    // Local runs: the key lives in the repo-root .env (git-ignored).
+    for (const f of [join(/*turbopackIgnore: true*/ process.cwd(), '.env'), join(/*turbopackIgnore: true*/ process.cwd(), '..', '.env')]) {
+      if (existsSync(f)) {
+        process.loadEnvFile(f);
+        break;
+      }
+    }
+  }
   const key = process.env.NEAR_AI_API_KEY;
   if (!key) throw new Error('NEAR_AI_API_KEY is not set (see .env.example)');
   return key;
