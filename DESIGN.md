@@ -51,7 +51,7 @@ A typical shareholder register lets investors log in and edit their own details,
 | Estate reviewer (human) | Approves transferring a deceased shareholder's holding and payouts to the estate after checking documents; lifts a freeze made by mistake |
 | Attacker (demo only) | Tries to change an investor's payout account directly and is rejected |
 
-All roles are NEAR testnet accounts. Investors and helpers get theirs invisibly through NEAR Auth, as random implicit accounts rather than readable names, so an account can't be linked to a person from the chain alone.
+All roles are NEAR testnet accounts. Investors and helpers get theirs invisibly (demo: pre-created behind the mock login; production: NEAR Auth), as random implicit accounts rather than readable names, so an account can't be linked to a person from the chain alone.
 
 **Restricted keys (NEAR function-call access keys).** Each role holds a key that can only call the methods it needs, enforced by NEAR itself, not just by the app:
 
@@ -283,7 +283,7 @@ In the demo this uses a fictional shareholder (not Maria) and simulated document
 | Bank payouts | Shown as queued | Payment provider, account number released by the TEE for that payment only |
 | Cross-chain payouts | Same as the Intents payouts row: real mainnet payout of a tiny amount; if Intents is unavailable, a labelled simulated route on testnet | NEAR Intents |
 
-**Login fallback:** if NEAR Auth can't be set up on testnet in time, the demo uses a mock login screen (same look) with pre-created testnet accounts, clearly labelled in the README. The investor experience shown is identical.
+**Login fallback (chosen Nov 2):** a common security product flagged the NEAR Auth testnet login page as harmful, so judges could hit the same block. The demo uses a mock login screen (same look) with pre-created testnet accounts, clearly labelled in the README. The investor experience shown is identical.
 
 ## 9. Investor screens (designed for older people)
 
@@ -426,7 +426,7 @@ All three tracks feed the grand prize, which rewards one coherent story: an agen
 ## 16. Open decisions (for Nov 1)
 
 - Project name
-- Whether NEAR Auth works on testnet in the first days, or we switch to the fallback early
+- Whether NEAR Auth works on testnet in the first days, or we switch to the fallback early. Decided Nov 2: mock login (see Login fallback)
 - Merkle-root payout check, or plain manifest hash as fallback
 
 ## 16a. Priorities for the grand prize

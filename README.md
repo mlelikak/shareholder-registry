@@ -97,7 +97,7 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 | NEAR feature | Used for |
 |---|---|
 | NEAR accounts and transaction signatures | Every change is authenticated by the investor's own account instead of a phone call |
-| NEAR Auth | Investors log in with email, a text code or Face ID; their NEAR account is created and used invisibly |
+| Login (simulated) | Investors log in with email or a text code on a labelled mock login screen; their random NEAR testnet account is used invisibly. In production this would be NEAR Auth |
 | Meta transactions (relayer) | Investors, helpers and the agent sign; the platform pays network fees. Nobody else needs tokens |
 | Function-call access keys | Each role gets a key limited to its methods: the helper can only cancel a change or freeze the record, the AI agent can only flag, pause, freeze and log, the investor's phone key cannot touch anything else |
 | Smart contract (Rust, `near-sdk-rs`) | Enforces who may change what, waiting periods, helper cancels, statuses and payout splitting, for everyone including the operator |
@@ -144,7 +144,7 @@ Steps for a judge (the in-app **Demo inbox** shows the emails and text codes tha
 | NEAR Intents payout to another chain (mainnet, a tiny amount) — TODO: confirm, or note fallback | |
 | Event-based alerts | Payouts to bank accounts (shown as queued) |
 | Caretaker agent's contract actions with its restricted key | Agent's emails, texts and letters (shown in the Demo inbox); estate documents |
-| Login via NEAR Auth — TODO: confirm, or note fallback | Strong identification (a generic screen standing in for national bank-based identification) |
+| Login (mock screen; each cast member has a pre-created random testnet account whose key the demo site holds) | Strong identification (a generic screen standing in for national bank-based identification) |
 | KYC payout gate and attestations | KYC provider (identity checks, sanctions and PEP screening) |
 | | Euro stablecoin: a test euro token on testnet (EURC or similar in production, where available) |
 
