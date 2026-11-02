@@ -268,7 +268,7 @@ In the demo this uses a fictional shareholder (not Maria) and simulated document
 | Piece | Demo version | Real version (roadmap) |
 |---|---|---|
 | Strong identification | A generic "strong identification" screen (no real bank names or logos) | national bank-based identification through a certified broker, at onboarding and for approving every change |
-| Login and signing | NEAR Auth with email / text code on testnet (**core goal**); fallback below | NEAR Auth with Face ID / fingerprint and recovery; the NEAR key signs the change that strong identification approved |
+| Login and signing | Labelled mock login with email / text code (see Login fallback below) | NEAR Auth with Face ID / fingerprint and recovery; the NEAR key signs the change that strong identification approved |
 | Network fees | Relayer sponsoring meta transactions (or the platform's account as fallback) | Relayer sponsoring meta transactions |
 | Caretaker agent | Small service using NEAR AI Cloud private inference (must-have; a standard LLM API only with Mike's approval); messages go to the Demo inbox | Always-on agent in an enclave (e.g. IronClaw on NEAR AI Cloud) so its key can't be taken from the host; real email/SMS/letters; local languages |
 | Bank verifier | Mock verifier (stretch: run it inside a NEAR AI Cloud enclave so the contract accepts only attested results) | Open banking or bank-website proofs processed in an enclave |
