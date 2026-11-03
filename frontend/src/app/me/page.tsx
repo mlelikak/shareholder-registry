@@ -355,9 +355,9 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
         </div>
       )}
 
-      {open && ev?.confirmation === 'unconfirmed' && (
+      {ev && ev.confirmation === 'unconfirmed' && (open || heldAmount > 0n) && (
         <div className="card">
-          <h2>{v.company.name} is about to pay its shareholders.</h2>
+          <h2>{open ? `${v.company.name} is about to pay its shareholders.` : `Before we send your money from ${v.company.name}:`}</h2>
           <p className="big-text">Our records show you hold <strong>{ev.sharesOnRecord?.toLocaleString('en')} shares</strong>. Is that right?</p>
           <div className="stack">
             <button className="btn big" disabled={!!busy} onClick={() => run('yes', 'confirm-holding', { shares: String(ev.sharesOnRecord) })}>
