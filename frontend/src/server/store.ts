@@ -104,3 +104,7 @@ export function resetDemoState() {
   saveInbox([]);
   saveAgentLog([]);
 }
+
+/** Small off-chain JSON files next to the demo state (e.g. profiles). */
+export const readJsonFile = readJson;
+export const writeJsonFile = writeJson;

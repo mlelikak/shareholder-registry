@@ -11,6 +11,7 @@ export type { DemoState };
 
 const LINKS = [
   { href: '/', label: 'Start' },
+  { href: '/me', label: 'Investor app' },
   { href: '/company', label: 'Company' },
   { href: '/agent', label: 'Agent log' },
   { href: '/inbox', label: 'Demo inbox' },

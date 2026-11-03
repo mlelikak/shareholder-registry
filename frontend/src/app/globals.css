@@ -162,3 +162,25 @@ pre { background: var(--code-bg); padding: 12px; border-radius: 8px; white-space
 
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .spacer { flex: 1; }
+
+/* Investor screens: built for older people (DESIGN.md section 9). */
+main.investor { max-width: 680px; font-size: 20px; line-height: 1.6; }
+main.investor h1 { font-size: 34px; margin-bottom: 14px; }
+main.investor h2 { font-size: 23px; margin: 0 0 8px; }
+.big-text { font-size: 22px; }
+.good { color: var(--green); font-weight: 600; }
+.card { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 20px; margin: 18px 0; }
+.btn.big { font-size: 20px; padding: 16px 22px; border-radius: 12px; min-height: 58px; }
+.stack { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+.stack .btn { justify-content: center; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.choices .btn { justify-content: center; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; margin: 16px 0; }
+.field input { font: inherit; font-size: 26px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); max-width: 320px; letter-spacing: 0.08em; }
+.field input:focus { outline: 3px solid var(--accent); outline-offset: 1px; }
+.callus { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 18px; }
+
+@media print {
+  .banner, .nav, .noprint, .callus { display: none !important; }
+  body { background: #fff; color: #000; }
+}
