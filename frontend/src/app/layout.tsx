@@ -1,7 +1,10 @@
 import '@/app/globals.css';
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Nav } from '@/app/ui';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Shareholder Registry',
@@ -10,9 +13,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
-        <div className="banner">Demo on NEAR testnet · test euros, not real money · logins, emails and texts are simulated</div>
+        <div className="demo-strip">
+          <b>Demo</b> on NEAR testnet · test euros, not real money · logins, emails and texts are simulated
+        </div>
         <Nav />
         {children}
       </body>

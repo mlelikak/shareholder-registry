@@ -4,7 +4,7 @@
 // per screen, plain words, no countdown pressure, "Call us" always visible.
 
 import { useCallback, useEffect, useState } from 'react';
-import { euros } from '@/app/ui';
+import { Avatar, euros, Icon, Spinner } from '@/app/ui';
 
 type Person = { key: string; name: string; phoneEnd: string; helperOf?: string };
 type Pending = { method: string; effective_at: number; extended: boolean; bankLast4?: string };
@@ -57,9 +57,10 @@ const when = (ms: number) =>
 
 function CallUs() {
   return (
-    <p className="callus">
-      Questions? <strong>Call us: 0800 000 000</strong> (simulated) · or ask your helper
-    </p>
+    <div className="callus noprint">
+      <Icon name="call" />
+      <span>Questions? <strong>Call us: 0800 000 000</strong> <span className="small">(simulated)</span></span>
+    </div>
   );
 }
 
@@ -80,6 +81,15 @@ function Done({ reply }: { reply: Reply | null }) {
 
 // ---------- Login (simulated) ----------
 
+const ROLES: Record<string, string> = {
+  maria: 'Shareholder, 72 · target of a scam call',
+  tom: 'Shareholder · his email bounced',
+  peter: 'Shareholder · identity check expired',
+  lena: 'Shareholder · bought 200 shares from Peter',
+  erik: 'Shareholder · everything in order',
+  anna: "Maria's daughter · trusted helper",
+};
+
 function Login({ onDone }: { onDone: () => void }) {
   const [people, setPeople] = useState<Person[]>([]);
   const [who, setWho] = useState<Person | null>(null);
@@ -92,17 +102,20 @@ function Login({ onDone }: { onDone: () => void }) {
   if (!who)
     return (
       <>
-        <h1>Log in</h1>
-        <p className="notice warn small">Simulated login for the demo: choose who you are. In the real app you log in with your email or phone.</p>
-        <div className="choices">
+        <h1>Who are you?</h1>
+        <p className="notice warn small">Simulated login: choose a person from the demo. In the real app you log in with your email or phone.</p>
+        <div className="people">
           {people.map((p) => (
-            <button key={p.key} className="btn big secondary" onClick={async () => {
+            <button key={p.key} className="person" onClick={async () => {
               setWho(p);
               const r = await post('send-code', { key: p.key });
               setHint(String(r.data?.code ?? ''));
             }}>
-              {p.name}
-              {p.helperOf && <span className="small"> (helper)</span>}
+              <Avatar name={p.name} />
+              <span>
+                <strong>{p.name}</strong>
+                <span className="role" style={{ display: 'block' }}>{ROLES[p.key] ?? (p.helperOf ? 'Trusted helper' : 'Shareholder')}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -117,7 +130,7 @@ function Login({ onDone }: { onDone: () => void }) {
         Code
         <input inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(e.target.value)} maxLength={6} />
       </label>
-      <div className="row">
+      <div className="stack">
         <button className="btn big" onClick={async () => {
           const r = await post('login', { key: who.key, code });
           if (r.ok) onDone();
@@ -178,7 +191,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
           Last 4 digits of your new account
           <input inputMode="numeric" value={last4} onChange={(e) => setLast4(e.target.value)} maxLength={4} />
         </label>
-        <div className="row">
+        <div className="stack">
           <button className="btn big" disabled={busy} onClick={async () => {
             setBusy(true);
             const r = await post('bank-verify', { last4 });
@@ -205,7 +218,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
           Code
           <input inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} maxLength={6} />
         </label>
-        <div className="row">
+        <div className="stack">
           <button className="btn big" disabled={busy} onClick={async () => {
             setBusy(true);
             const r = await post('bank-request', { code });
@@ -241,7 +254,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
         us.
       </p>
       {reply?.explorer && <p className="small"><a href={reply.explorer} target="_blank" rel="noreferrer">Recorded on NEAR testnet ↗</a></p>}
-      <div className="row noprint">
+      <div className="stack noprint">
         <button className="btn big secondary" onClick={() => window.print()}>Print this confirmation</button>
         <button className="btn big" onClick={onExit}>Back to my page</button>
       </div>
@@ -272,7 +285,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
         <h1>Identify yourself again</h1>
         <p className="notice warn small">Simulated strong identification: in the real app you confirm who you are with your usual identification, through a licensed partner.</p>
         <p className="big-text">It takes a few minutes, and then your identity check is valid for another year.</p>
-        <div className="row">
+        <div className="stack">
           <button className="btn big" disabled={!!busy} onClick={async () => {
             const r = await run('id', 'reidentify');
             if (r.ok) setScreen('home');
@@ -292,7 +305,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
           Number of shares
           <input inputMode="numeric" value={shares} onChange={(e) => setShares(e.target.value.replace(/\D/g, ''))} />
         </label>
-        <div className="row">
+        <div className="stack">
           <button className="btn big" disabled={!!busy || !shares} onClick={async () => {
             const r = await run('count', 'confirm-holding', { shares });
             if (r.ok) setScreen('home');
@@ -338,14 +351,17 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
     <>
       <h1>Hello {v.name}.</h1>
       {v.status === 'green' && !needsDetails && !v.kycExpired ? (
-        <p className="big-text good">Your details are up to date ✓</p>
+        <div className="status-hero good-bg"><span className="good"><Icon name="check" /></span><div><strong>Your details are up to date.</strong><div className="small">Nothing to do right now.</div></div></div>
       ) : (
-        <p className="big-text">There is {[needsDetails, v.kycExpired, open && ev?.confirmation === 'unconfirmed'].filter(Boolean).length > 1 ? 'a little' : 'one thing'} to do below.</p>
+        <div className="status-hero todo-bg"><span style={{ color: 'var(--amber)' }}><Icon name="alert" /></span><div><strong>{[needsDetails, v.kycExpired, ev?.confirmation === 'unconfirmed' && (open || heldAmount > 0n)].filter(Boolean).length > 1 ? 'A few things need you' : 'One thing needs you'}</strong><div className="small">It only takes a moment. See below.</div></div></div>
       )}
-      <p className="big-text">Payments go to: <strong>{payTo(v)}</strong></p>
+      <div className="tile" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <Icon name={v.payoutMethod === 'bank' ? 'bank' : 'euro'} className="" />
+        <div><div className="small muted">Payments go to</div><strong>{payTo(v)}</strong></div>
+      </div>
 
       {v.pendingChange && (
-        <div className="card">
+        <div className="tile">
           <h2>A change is waiting</h2>
           <p>
             Your new account {v.pendingChange.bankLast4 ? `ending ${v.pendingChange.bankLast4} ` : ''}will be used from{' '}
@@ -356,7 +372,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
       )}
 
       {ev && ev.confirmation === 'unconfirmed' && (open || heldAmount > 0n) && (
-        <div className="card">
+        <div className="tile">
           <h2>{open ? `${v.company.name} is about to pay its shareholders.` : `Before we send your money from ${v.company.name}:`}</h2>
           <p className="big-text">Our records show you hold <strong>{ev.sharesOnRecord?.toLocaleString('en')} shares</strong>. Is that right?</p>
           <div className="stack">
@@ -368,7 +384,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
         </div>
       )}
       {ev && disputed && (
-        <div className="card">
+        <div className="tile">
           <h2>Thank you for telling us</h2>
           <p>You told us you hold {(ev.confirmation as { disputed: { shares: number } }).disputed.shares.toLocaleString('en')} shares. We are looking into it and will ask you to confirm once it is corrected. Your money is safe in the meantime.</p>
         </div>
@@ -376,7 +392,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
       {open && ev?.confirmation === 'confirmed' && <p className="good">✓ You confirmed your {ev.sharesOnRecord?.toLocaleString('en')} shares for {v.company.name}&apos;s payout.</p>}
 
       {v.kycExpired && (
-        <div className="card">
+        <div className="tile">
           <h2>Your identity check has expired</h2>
           <p>Before we can pay you, please identify yourself again. It takes a few minutes.</p>
           <button className="btn big" onClick={() => setScreen('id')}>Identify me again</button>
@@ -384,7 +400,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
       )}
 
       {needsDetails && (
-        <div className="card">
+        <div className="tile">
           <h2>Are your details still correct?</h2>
           <p>
             Payments go to {payTo(v).toLowerCase().startsWith('euros') ? 'your account here' : payTo(v)} · Phone ending {v.phoneEnd}
@@ -394,24 +410,24 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
       )}
 
       {line && line.outcome === 'paid' && (
-        <div className="card">
+        <div className="tile">
           <h2>{euros(line.amount)} received from {v.company.name}.</h2>
           <p>It&apos;s in your account now. (Test euros on NEAR testnet.)</p>
           <button className="btn big secondary" onClick={async () => { setScreen('check'); setReply(await post('check-payment')); }}>Check this payment</button>
         </div>
       )}
       {line && line.outcome === 'queued' && (
-        <div className="card">
+        <div className="tile">
           <h2>{euros(line.amount)} from {v.company.name} is on its way to your bank account ending {v.bankLast4}.</h2>
           <p>Banks can take a day or two. (Bank delivery is simulated in the demo.)</p>
           <button className="btn big secondary" onClick={async () => { setScreen('check'); setReply(await post('check-payment')); }}>Check this payment</button>
         </div>
       )}
       {heldAmount > 0n && line && (
-        <div className="card">
+        <div className="tile">
           <h2>{euros(v.held)} from {v.company.name} is waiting for you.</h2>
           <p>We kept it safe because we couldn&apos;t pay you yet. Once the steps above are done, you can collect it.</p>
-          <div className="row">
+          <div className="stack">
             <button className="btn big" disabled={!!busy} onClick={() => run('claim', 'claim')}>{busy === 'claim' ? 'Sending…' : 'Collect my money'}</button>
             <button className="btn big secondary" onClick={async () => { setScreen('check'); setReply(await post('check-payment')); }}>Check this payment</button>
           </div>
@@ -442,7 +458,7 @@ function Helper({ v, refresh }: { v: HelperView; refresh: () => Promise<void> })
       <p className="big-text">You are {v.helperOf.name}&apos;s trusted helper. You can stop changes {v.helperOf.name} didn&apos;t really want. You can&apos;t make changes or receive money.</p>
       {!v.isHelperOnChain && <p className="notice warn">Your helper role starts shortly: adding a helper also has a waiting period.</p>}
       {p && !fine ? (
-        <div className="card">
+        <div className="tile">
           <h2>{v.helperOf.name} asked to change the bank account for payouts{p.bankLast4 ? ` to one ending ${p.bankLast4}` : ''}.</h2>
           <p className="big-text">It takes effect on <strong>{when(p.effective_at)}</strong>.</p>
           <div className="stack">
@@ -473,20 +489,30 @@ export default function Me() {
     refresh();
   }, [refresh]);
   return (
-    <main className="investor">
-      {!view ? (
-        <p>Loading…</p>
-      ) : !view.loggedIn ? (
-        <Login onDone={refresh} />
-      ) : (
-        <>
-          {view.role === 'helper' ? <Helper v={view} refresh={refresh} /> : <Investor v={view} refresh={refresh} />}
-          <div className="row noprint" style={{ marginTop: 32 }}>
-            <button className="btn secondary small" onClick={async () => { await post('logout'); refresh(); }}>Log out</button>
+    <main>
+      <div className="phone-stage">
+        <div className="phone">
+          <div className="phone-bar noprint">
+            {view?.loggedIn ? <Avatar name={view.name} /> : <Icon name="shield" className="" />}
+            <span className="title">{view?.loggedIn ? view.name : 'Your shares'}</span>
+            {view?.loggedIn && (
+              <button className="btn ghost small" onClick={async () => { await post('logout'); refresh(); }}>Log out</button>
+            )}
           </div>
-        </>
-      )}
-      <CallUs />
+          <div className="phone-body">
+            {!view ? (
+              <p className="row"><Spinner /> Loading…</p>
+            ) : !view.loggedIn ? (
+              <Login onDone={refresh} />
+            ) : view.role === 'helper' ? (
+              <Helper v={view} refresh={refresh} />
+            ) : (
+              <Investor v={view} refresh={refresh} />
+            )}
+          </div>
+          <CallUs />
+        </div>
+      </div>
     </main>
   );
 }

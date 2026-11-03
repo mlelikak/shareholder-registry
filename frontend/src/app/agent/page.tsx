@@ -2,37 +2,47 @@
 
 import type { AgentLogEntry } from '@/server/store.ts';
 import type { Attestation, ReplyProof } from '@/server/nearai.ts';
-import { Loading, usePoll, type DemoState } from '@/app/ui';
+import { Icon, Loading, usePoll, type DemoState } from '@/app/ui';
 
 const KIND: Record<string, { icon: string; label: string }> = {
-  report: { icon: '📋', label: 'Report' },
-  finding: { icon: '🔎', label: 'Finding' },
-  proposal: { icon: '🧩', label: 'Proposal' },
-  message: { icon: '✉️', label: 'Message' },
-  chain: { icon: '⛓️', label: 'On-chain' },
-  attestation: { icon: '🔒', label: 'Enclave' },
-  refusal: { icon: '🛑', label: 'Refused' },
-  error: { icon: '⚠️', label: 'Problem' },
+  report: { icon: 'list', label: 'Report' },
+  finding: { icon: 'search', label: 'Finding' },
+  proposal: { icon: 'puzzle', label: 'Proposal' },
+  message: { icon: 'mail', label: 'Message sent' },
+  chain: { icon: 'chain', label: 'On-chain' },
+  attestation: { icon: 'lock', label: 'Enclave check' },
+  refusal: { icon: 'stop', label: 'Refused' },
+  error: { icon: 'alert', label: 'Problem' },
 };
+
+function Proof({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <span style={{ color: ok ? 'var(--green)' : 'var(--red)', display: 'inline-flex' }}><Icon name={ok ? 'check' : 'x'} /></span>
+      <span>{children}</span>
+    </div>
+  );
+}
 
 function AttestationDetail({ data }: { data: { attestation?: Attestation[]; proofs?: ReplyProof[] } }) {
   const a = data.attestation?.find((x) => x.keyInQuote) ?? data.attestation?.[0];
+  const p = data.proofs ?? [];
   return (
-    <div className="small">
-      {data.proofs?.map((p) => (
-        <div key={p.chatId}>
-          Reply <code>{p.chatId.slice(0, 12)}…</code>: request and reply hashes match {p.hashesMatch ? '✓' : '✗'} · signature valid{' '}
-          {p.signatureValid ? '✓' : '✗'} · signed by the attested enclave key {p.attested ? '✓' : '✗'}
-        </div>
-      ))}
+    <div className="proof-list">
+      <Proof ok={p.length > 0 && p.every((x) => x.hashesMatch && x.signatureValid)}>
+        Each AI reply ({p.length}) is signed, and the signature covers the exact request and reply
+      </Proof>
+      <Proof ok={p.length > 0 && p.every((x) => x.attested)}>The signing key belongs to the attested enclave</Proof>
       {a && (
-        <div style={{ marginTop: 4 }}>
-          Intel TDX quote v{a.quoteVersion} (TEE type {a.teeType}): enclave key inside the quote {a.keyInQuote ? '✓' : '✗'} · our fresh
-          nonce inside the quote {a.nonceInQuote ? '✓' : '✗'} · NVIDIA GPU evidence {a.nvidiaEvidence ? '✓' : '✗'}
-          <div className="muted">
-            Model {a.model}. The Intel and NVIDIA certificate chains are checked with NEAR&apos;s open-source verifier (see README).
+        <>
+          <Proof ok={a.keyInQuote}>That key is inside the Intel TDX hardware quote</Proof>
+          <Proof ok={a.nonceInQuote}>The quote contains our fresh random number, so it was made just now</Proof>
+          <Proof ok={a.nvidiaEvidence}>NVIDIA GPU evidence is included</Proof>
+          <div className="tiny muted" style={{ marginTop: 4 }}>
+            Model {a.model} · enclave key <code>{a.signingAddress.slice(0, 12)}…</code> · the Intel and NVIDIA certificate chains are checked with
+            NEAR&apos;s open-source verifier (see README)
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -41,61 +51,71 @@ function AttestationDetail({ data }: { data: { attestation?: Attestation[]; proo
 export default function AgentPage() {
   const log = usePoll<AgentLogEntry[]>('/api/agent-log', 8000);
   const state = usePoll<DemoState>('/api/state', 30000);
-  if (!log.data) return <main><Loading error={log.error} /></main>;
   return (
     <main>
-      <h1>Agent log</h1>
-      <p className="lead">
-        Everything the caretaker agent did, newest first. Readable details stay here, off-chain; the chain only gets a hash of each
-        summary, so what the agent recorded can be proven later without the chain saying why.
-        {state.data && (
-          <>
-            {' '}The agent&apos;s account{' '}
-            <a href={state.data.agent.explorer} target="_blank" rel="noreferrer" className="mono">{state.data.agent.id}</a> holds a single
-            key, limited to{' '}
-            {state.data.agent.allowedMethods.map((m) => (
-              <code key={m} style={{ marginRight: 6 }}>{m}</code>
-            ))}
-          </>
-        )}
-      </p>
-      <div className="panel">
-        {log.data.length === 0 && <p className="muted">Nothing yet. Run the agent from the Company screen.</p>}
-        {log.data.map((e) => (
-          <div key={e.id} className="log-entry">
-            <div className="when">
-              {new Date(e.at).toLocaleTimeString()}
-              <div>{KIND[e.kind]?.icon} {KIND[e.kind]?.label}</div>
-            </div>
-            <div>
-              <strong>{e.title}</strong>
-              {e.kind === 'attestation' ? (
-                <>
-                  {e.detail && <div className="small muted">{e.detail}</div>}
-                  <AttestationDetail data={(e.data ?? {}) as { attestation?: Attestation[]; proofs?: ReplyProof[] }} />
-                </>
-              ) : (
-                e.detail && (
-                  <div style={{ whiteSpace: 'pre-wrap' }} className={e.kind === 'chain' || e.kind === 'refusal' ? 'small mono' : ''}>
-                    {e.detail}
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Caretaker agent</div>
+          <h1>Agent log</h1>
+          <p className="lead" style={{ marginBottom: 0 }}>
+            Everything the agent did, newest first. Readable details stay here, off-chain. The chain only gets a hash of each summary, so
+            what the agent recorded can be proven later without the chain saying why.
+          </p>
+        </div>
+      </div>
+      <div className="split">
+        <section className="card">
+          {!log.data ? (
+            <Loading error={log.error} />
+          ) : log.data.length === 0 ? (
+            <p className="muted">Nothing yet. Run the agent from the Company page.</p>
+          ) : (
+            <div className="timeline">
+              {log.data.map((e) => (
+                <div key={e.id} className="t-item">
+                  <div className={`t-icon ${e.kind}`}><Icon name={KIND[e.kind]?.icon ?? 'list'} /></div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="t-meta">{KIND[e.kind]?.label} · {new Date(e.at).toLocaleTimeString()}</div>
+                    <div className="t-title">{e.title}</div>
+                    {e.kind === 'attestation' ? (
+                      <AttestationDetail data={(e.data ?? {}) as { attestation?: Attestation[]; proofs?: ReplyProof[] }} />
+                    ) : e.kind === 'chain' ? null : (
+                      e.detail && <div className={e.kind === 'refusal' || e.kind === 'error' ? 'small mono' : 'small'} style={{ marginTop: 4, whiteSpace: 'pre-wrap', color: 'var(--ink-2)' }}>{e.detail}</div>
+                    )}
+                    {(e.summaryHash || e.txHash) && (
+                      <div className="tiny muted" style={{ marginTop: 6 }}>
+                        {e.summaryHash && <>Hash on-chain <code>{e.summaryHash.slice(0, 14)}…</code> </>}
+                        {e.txHash && <a href={`https://testnet.nearblocks.io/txns/${e.txHash}`} target="_blank" rel="noreferrer">transaction ↗</a>}
+                      </div>
+                    )}
                   </div>
-                )
-              )}
-              <div className="small" style={{ marginTop: 4 }}>
-                {e.summaryHash && (
-                  <span className="muted">
-                    hash on-chain: <code>{e.summaryHash.slice(0, 16)}…</code>{' '}
-                  </span>
-                )}
-                {e.txHash && (
-                  <a href={`https://testnet.nearblocks.io/txns/${e.txHash}`} target="_blank" rel="noreferrer">
-                    transaction ↗
-                  </a>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
+          )}
+        </section>
+        <aside className="card">
+          <div className="card-head">
+            <div className="card-icon"><Icon name="shield" /></div>
+            <h2>What the agent can do</h2>
           </div>
-        ))}
+          <p className="small">Its NEAR account holds a single restricted key. The network itself refuses anything else.</p>
+          {state.data && (
+            <>
+              <div className="stack" style={{ gap: 6 }}>
+                {state.data.agent.allowedMethods.map((m) => (
+                  <div key={m} className="row small"><span style={{ color: 'var(--green)', display: 'inline-flex' }}><Icon name="check" /></span><code>{m}</code></div>
+                ))}
+                {['change payout details', 'set share counts', 'move money'].map((m) => (
+                  <div key={m} className="row small muted"><span style={{ color: 'var(--red)', display: 'inline-flex' }}><Icon name="x" /></span>cannot {m}</div>
+                ))}
+              </div>
+              <a className="btn secondary small" style={{ marginTop: 14 }} href={state.data.agent.explorer} target="_blank" rel="noreferrer">
+                See its key on the explorer ↗
+              </a>
+            </>
+          )}
+        </aside>
       </div>
     </main>
   );
