@@ -45,7 +45,7 @@ type HelperView = {
   currentBankLast4?: string;
 };
 type View = InvestorView | HelperView | { loggedIn: false };
-type Reply = { ok: boolean; message: string; error?: string; explorer?: string; data?: Record<string, unknown> };
+type Reply = { ok: boolean; message: string; error?: string; explorer?: string; feePaidByPlatform?: boolean; data?: Record<string, unknown> };
 
 async function post(op: string, body: Record<string, string> = {}): Promise<Reply> {
   const r = await fetch(`/api/me/${op}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -73,6 +73,7 @@ function Done({ reply }: { reply: Reply | null }) {
       {reply.explorer && (
         <div className="small">
           <a href={reply.explorer} target="_blank" rel="noreferrer">Recorded on NEAR testnet ↗</a>
+          {reply.feePaidByPlatform && <span className="muted"> · No fee for you: the platform paid it.</span>}
         </div>
       )}
     </div>

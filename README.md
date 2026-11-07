@@ -98,7 +98,7 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 |---|---|
 | NEAR accounts and transaction signatures | Every change is authenticated by the investor's own account instead of a phone call |
 | Login (simulated) | Investors log in with email or a text code on a labelled mock login screen; their random NEAR testnet account is used invisibly. In production this would be NEAR Auth |
-| Meta transactions (relayer) | Investors, helpers and the agent sign; the platform pays network fees. Nobody else needs tokens |
+| Meta transactions (relayer) | Investors and helpers sign with their own key; a platform relayer submits the call and pays the network fee, so they never need NEAR. The agent pays its own small fees from its restricted key's allowance |
 | Function-call access keys | Each role gets a key limited to its methods: the helper can only cancel a change or freeze the record, the AI agent can only flag, pause, freeze and log, the investor's phone key cannot touch anything else |
 | Smart contract (Rust, `near-sdk-rs`) | Enforces who may change what, waiting periods, helper cancels, statuses and payout splitting, for everyone including the operator |
 | NEP-141 fungible token | Stablecoin payouts (a test stablecoin on testnet) and funds held for unreachable investors |
@@ -172,7 +172,7 @@ TODO: diagram.
 - `frontend/` — Next.js app from `create-near-app` (investor, helper, company, attacker and demo-inbox views)
 - `verifier/` — simulated bank verification service
 - `agent/` — caretaker agent service (LLM + restricted NEAR key)
-- `relayer/` — pays network fees for meta transactions
+- `frontend/src/server/near.ts` (`relayedCall`) — meta transactions: the investor signs, the platform relayer pays the fee
 - `payout-service/` — sends Intents payouts with a restricted key (registered routes only)
 - `docs/DESIGN.md` — full design spec
 

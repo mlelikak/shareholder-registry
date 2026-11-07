@@ -68,6 +68,8 @@ export type CallResult = {
   error?: string;
   value?: unknown;
   logs: string[];
+  /** Set when a relayer paid the fee (meta transaction). */
+  relayedBy?: string;
 };
 
 /** Finds the first failure message anywhere in a transaction outcome. */
@@ -135,6 +137,31 @@ export async function send(account: Account, receiverId: string, list: Action[],
     const txHash = (outcome as { transaction?: { hash?: string } }).transaction?.hash;
     const error = failureOf(outcome);
     return { ok: !error, txHash, error, value: decodeValue(outcome), logs: logsOf(outcome) };
+  } catch (e) {
+    return { ok: false, error: errorText(e), logs: [] };
+  }
+}
+
+/**
+ * Meta transaction (NEP-366): `user` signs the call as a delegate action and
+ * `relayer` submits it and pays the fee, so the user needs no NEAR for gas.
+ * The contract still sees `user` as the caller.
+ */
+export async function relayedCall(
+  user: Account,
+  relayer: Account,
+  contractId: string,
+  methodName: string,
+  args: Record<string, unknown>,
+  opts: { gasTera?: number } = {},
+): Promise<CallResult> {
+  const gas = BigInt(opts.gasTera ?? 30) * 10n ** 12n;
+  try {
+    const { signedDelegate } = await withRetry(`sign ${methodName}`, () =>
+      user.createSignedMetaTransaction({ receiverId: contractId, actions: [actions.functionCall(methodName, args, gas, 0n)] }),
+    );
+    const r = await send(relayer, user.accountId, [actions.signedDelegate(signedDelegate) as Action], `relay ${methodName}`);
+    return { ...r, relayedBy: relayer.accountId };
   } catch (e) {
     return { ok: false, error: errorText(e), logs: [] };
   }

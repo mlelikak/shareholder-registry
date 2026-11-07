@@ -4,7 +4,7 @@
 // check; they are labelled as such on screen.
 
 import { createHash, randomBytes, randomInt } from 'node:crypto';
-import { call, signerAccount, txLink, view, type CallResult } from './near.ts';
+import { call, relayedCall, signerAccount, txLink, view, type CallResult } from './near.ts';
 import { addToInbox, loadDeployment, type CastMember, type Deployment } from './store.ts';
 import { readJsonFile, writeJsonFile } from './store.ts';
 
@@ -24,8 +24,26 @@ function profile(key: string): Profile {
   return { bankLast4: DEFAULT_BANK[key], ...profiles()[key] };
 }
 
-export type Reply = { ok: boolean; message: string; error?: string; explorer?: string; data?: unknown };
-const reply = (r: CallResult, message: string): Reply => ({ ok: r.ok, message: r.ok ? message : 'That did not go through', error: r.error, explorer: txLink(r.txHash) });
+export type Reply = { ok: boolean; message: string; error?: string; explorer?: string; feePaidByPlatform?: boolean; data?: unknown };
+const reply = (r: CallResult, message: string): Reply => ({
+  ok: r.ok,
+  message: r.ok ? message : 'That did not go through',
+  error: r.error,
+  explorer: txLink(r.txHash),
+  feePaidByPlatform: Boolean(r.relayedBy),
+});
+
+/**
+ * Signs a contract call with the person's own key. When the demo copy has a
+ * relayer, it goes as a meta transaction: the platform pays the fee, so the
+ * investor never needs NEAR. Otherwise the person's account pays.
+ */
+function asPerson(d: Deployment, m: CastMember) {
+  const self = signerAccount(m.accountId, m.privateKey);
+  const relayer = d.relayer ? signerAccount(d.relayer.accountId, d.relayer.privateKey) : null;
+  return (method: string, args: Record<string, unknown>, opts: { gasTera?: number } = {}) =>
+    relayer ? relayedCall(self, relayer, d.registry, method, args, opts) : call(self, d.registry, method, args, opts);
+}
 
 export function member(d: Deployment, key: string): CastMember {
   const m = d.cast.find((c) => c.key === key);
@@ -137,14 +155,14 @@ async function helperView(d: Deployment, m: CastMember) {
 export async function act(key: string, op: string, body: Record<string, string>): Promise<Reply> {
   const d = loadDeployment();
   const m = member(d, key);
-  const me = signerAccount(m.accountId, m.privateKey);
+  const me = asPerson(d, m);
   switch (op) {
     case 'confirm-details':
-      return reply(await call(me, d.registry, 'confirm_details', {}), 'Thank you. Your details are confirmed.');
+      return reply(await me('confirm_details', {}), 'Thank you. Your details are confirmed.');
     case 'confirm-holding': {
       const shares = Number(body.shares);
       if (!Number.isInteger(shares) || shares < 0 || shares > 10_000_000) return { ok: false, message: 'Please enter a whole number of shares.' };
-      return reply(await call(me, d.registry, 'confirm_holding', { event_id: d.eventId, shares }), 'Thank you. We have your answer.');
+      return reply(await me('confirm_holding', { event_id: d.eventId, shares }), 'Thank you. We have your answer.');
     }
     case 'reidentify': {
       // Simulated strong identification; the simulated KYC provider records a new check with its own key.
@@ -153,9 +171,9 @@ export async function act(key: string, op: string, body: Record<string, string>)
       return reply(r, 'Thank you. Your identity check is renewed for a year.');
     }
     case 'new-phone':
-      return reply(await call(me, d.registry, 'record_contact_change', {}), 'Thank you. Your new phone number is saved.');
+      return reply(await me('record_contact_change', {}), 'Thank you. Your new phone number is saved.');
     case 'claim':
-      return reply(await call(me, d.registry, 'claim', { company_id: d.companyId }, { gasTera: 100 }), 'Your money is on its way to you.');
+      return reply(await me('claim', { company_id: d.companyId }, { gasTera: 100 }), 'Your money is on its way to you.');
     case 'bank-verify': {
       // Simulated bank login: the verifier records a fingerprint of the new account, never the number itself.
       const last4 = (body.last4 ?? '').replace(/\D/g, '').slice(-4);
@@ -168,7 +186,7 @@ export async function act(key: string, op: string, body: Record<string, string>)
     }
     case 'bank-request': {
       if (!checkLoginCode(key, body.code ?? '')) return { ok: false, message: 'That code is not right. Please check the text we sent.' };
-      const r = await call(me, d.registry, 'request_payout_change', { holder_id: m.accountId, method: 'bank' });
+      const r = await me('request_payout_change', { holder_id: m.accountId, method: 'bank' });
       if (r.ok) {
         const h = await view<HolderRaw>(d.registry, 'get_holder', { holder_id: m.accountId });
         const when = new Date(h.pending_change!.effective_at).toLocaleString('en-GB', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
@@ -186,11 +204,11 @@ export async function act(key: string, op: string, body: Record<string, string>)
       return { ...reply(r, 'Your change is saved.'), data: { helpers: h_names(d, m) } };
     }
     case 'cancel-change':
-      return reply(await call(me, d.registry, 'cancel_payout_change', { holder_id: m.accountId }), 'The change is cancelled. Nothing was changed.');
+      return reply(await me('cancel_payout_change', { holder_id: m.accountId }), 'The change is cancelled. Nothing was changed.');
     case 'helper-cancel': {
       if (!m.helperOf) return { ok: false, message: 'Only a helper can do this.' };
       const of = member(d, m.helperOf);
-      const r = await call(me, d.registry, 'cancel_payout_change', { holder_id: of.accountId });
+      const r = await me('cancel_payout_change', { holder_id: of.accountId });
       if (r.ok) {
         saveProfile(of.key, { pendingBankLast4: undefined });
         addToInbox({ id: randomBytes(6).toString('hex'), at: new Date().toISOString(), channel: 'email', to: of.key, toName: of.name, from: 'platform', subject: 'Your bank change was cancelled', body: `Hello ${of.name}, ${m.name} cancelled the change to your bank account, so your payouts still go to the account ending ${profile(of.key).bankLast4}. If you did want this change, please call us and we'll help.` });

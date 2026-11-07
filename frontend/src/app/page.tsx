@@ -51,7 +51,7 @@ export default function Start() {
           <div className="card-head"><div className="card-icon"><Icon name="check" /></div><h3>Real</h3></div>
           <p className="small" style={{ margin: 0 }}>
             On NEAR testnet: the registry contract, share counts, confirmations and disputes, the checks before paying, the payout in a test
-            euro token, held funds and the restricted keys. On NEAR AI Cloud: the agent&apos;s model, in an attested enclave.
+            euro token, held funds, the restricted keys, and the platform paying investors&apos; fees through meta transactions. On NEAR AI Cloud: the agent&apos;s model, in an attested enclave.
           </p>
         </div>
         <div className="card flat">

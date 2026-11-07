@@ -34,6 +34,8 @@ export type Deployment = {
   payoutService: KeyedAccount;
   /** The agent account has only a restricted function-call key; this is it. */
   agent: KeyedAccount & { allowedMethods: string[] };
+  /** Platform account that pays investors' fees through meta transactions. */
+  relayer?: KeyedAccount;
   /** Demo only: an unrelated account used by the attacker panel. */
   attacker?: KeyedAccount;
   cast: CastMember[];

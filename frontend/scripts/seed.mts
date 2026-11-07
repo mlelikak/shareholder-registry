@@ -109,6 +109,8 @@ async function main() {
   const reviewer = await createNamed('reviewer', 0.15);
   const payoutService = await createNamed('svc', 0.25);
   const attacker = await createNamed('attacker', 0.1);
+  // Pays investors' fees through meta transactions, so investors need no NEAR.
+  const relayer = await createNamed('relay', 1);
 
   // The agent account gets ONLY a function-call key limited to its four methods
   // on the registry. No full-access key exists, so nothing else can be signed.
@@ -129,7 +131,7 @@ async function main() {
   for (const p of PEOPLE) {
     const kp = keyFor(p.key);
     const accountId = keyToImplicitAddress(kp.getPublicKey());
-    if (!(await accountExists(accountId))) report(`create ${p.name}'s random account`, await send(funder, accountId, [actions.transfer(NEAR(0.3))]));
+    if (!(await accountExists(accountId))) report(`create ${p.name}'s random account`, await send(funder, accountId, [actions.transfer(NEAR(0.1))]));
     cast.push({ ...p, accountId, privateKey: kp.toString() });
   }
   stopIfFailed();
@@ -251,6 +253,7 @@ async function main() {
     payoutService,
     agent: { accountId: agentId, privateKey: agentKey.toString(), allowedMethods: AGENT_METHODS },
     attacker,
+    relayer,
     cast,
   };
   saveDeployment(deployment);
