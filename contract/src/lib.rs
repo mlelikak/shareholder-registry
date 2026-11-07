@@ -41,7 +41,9 @@ pub struct Contract {
     held: LookupMap<(String, AccountId), u128>,
     held_events: LookupMap<(String, AccountId), Vec<String>>,
     remainders: LookupMap<String, u128>,
-    queued_claims: LookupMap<(String, AccountId), u128>,
+    /// Held money a bank holder claimed: amount and the payout events it came from,
+    /// waiting for the bank partner to send it.
+    queued_claims: LookupMap<(String, AccountId), (u128, Vec<String>)>,
 }
 
 /// Writes a NEP-297 event. Callers pass only neutral data, never a reason.

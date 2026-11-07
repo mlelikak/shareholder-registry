@@ -334,7 +334,9 @@ impl Contract {
             && holder.state != HolderState::Transferred
         {
             self.set_outcomes(&events, &holder_id, Outcome::Queued);
-            *self.queued_claims.entry(key).or_insert(0) += amount;
+            let queued = self.queued_claims.entry(key).or_insert((0, Vec::new()));
+            queued.0 += amount;
+            queued.1.extend(events);
             return;
         }
 
@@ -408,6 +410,55 @@ impl Contract {
             }
             _ => self.finish_line(&event_id, &holder_id, amount, false),
         }
+    }
+
+    /// The bank partner (the payout service's key) reports that it sent a bank
+    /// payout that was queued at execution. The contract then hands the amount
+    /// to the service, which already paid the bank transfer, and the line is
+    /// paid. Only a queued line qualifies, and only once; if the hand-over
+    /// fails, the money is held for the holder, never lost.
+    pub fn report_bank_sent(&mut self, event_id: String, holder_id: AccountId) {
+        self.require_payout_service();
+        let mut event = self.event(&event_id);
+        let line = event
+            .lines
+            .get_mut(&holder_id)
+            .unwrap_or_else(|| env::panic_str("no line for this holder"));
+        require!(line.outcome == Outcome::Queued, "this line is not queued for a bank");
+        let key = (event.company_id.clone(), holder_id.clone());
+        require!(
+            !self.queued_claims.contains_key(&key),
+            "this holder's bank payment is a queued claim"
+        );
+        line.outcome = Outcome::Settling;
+        let amount = line.amount;
+        let token = self.company(&event.company_id).payout_token;
+        self.payouts.insert(event_id.clone(), event);
+        self.transfer(&token, env::predecessor_account_id(), amount)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CALLBACK)
+                    .on_payout_transfer(event_id, holder_id, U128(amount)),
+            )
+            .detach();
+    }
+
+    /// The same for held money a bank holder claimed later.
+    pub fn report_bank_claim_sent(&mut self, company_id: String, holder_id: AccountId) {
+        self.require_payout_service();
+        let key = (company_id.clone(), holder_id.clone());
+        let (amount, events) = self
+            .queued_claims
+            .remove(&key)
+            .unwrap_or_else(|| env::panic_str("no bank claim is queued for this holder"));
+        let token = self.company(&company_id).payout_token;
+        self.transfer(&token, env::predecessor_account_id(), amount)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_CALLBACK)
+                    .on_claim_transfer(company_id, holder_id, U128(amount), events),
+            )
+            .detach();
     }
 
     // ---------- Callbacks ----------

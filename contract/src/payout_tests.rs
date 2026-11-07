@@ -417,6 +417,107 @@ fn bank_holders_are_queued() {
     assert_adds_up(&c);
 }
 
+fn peter_queued() -> Contract {
+    let mut c = ready();
+    act("verifier", 0);
+    c.record_bank_verification(
+        account("peter"),
+        "ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12".into(),
+    );
+    act("peter", 0);
+    c.request_payout_change(account("peter"), PayoutMethod::Bank, None, None);
+    act("peter", 5 * MINUTE);
+    c.confirm_details();
+    act("admin", 5 * MINUTE);
+    c.execute_payout("exit".into());
+    c
+}
+
+#[test]
+fn the_bank_partner_reports_a_queued_payout_sent() {
+    let mut c = peter_queued();
+    act("service", 6 * MINUTE);
+    c.report_bank_sent("exit".into(), account("peter"));
+    assert_eq!(line(&c, "peter").outcome, Outcome::Settling);
+    assert_adds_up(&c);
+
+    callback(6 * MINUTE, true);
+    c.on_payout_transfer("exit".into(), account("peter"), U128(333_333));
+    assert_eq!(line(&c, "peter").outcome, Outcome::Paid);
+    assert_adds_up(&c);
+}
+
+#[test]
+fn a_failed_bank_hand_over_is_held_not_lost() {
+    let mut c = peter_queued();
+    act("service", 6 * MINUTE);
+    c.report_bank_sent("exit".into(), account("peter"));
+    callback(6 * MINUTE, false);
+    c.on_payout_transfer("exit".into(), account("peter"), U128(333_333));
+    assert_eq!(line(&c, "peter").outcome, Outcome::Held);
+    assert_eq!(c.get_held_funds("acme".into(), account("peter")).0, 333_333);
+    assert_adds_up(&c);
+}
+
+#[test]
+#[should_panic(expected = "only the payout service can do this")]
+fn only_the_bank_partner_reports_a_bank_payout() {
+    let mut c = peter_queued();
+    act("admin", 6 * MINUTE);
+    c.report_bank_sent("exit".into(), account("peter"));
+}
+
+#[test]
+#[should_panic(expected = "this line is not queued for a bank")]
+fn a_bank_payout_is_reported_only_once() {
+    let mut c = peter_queued();
+    act("service", 6 * MINUTE);
+    c.report_bank_sent("exit".into(), account("peter"));
+    c.report_bank_sent("exit".into(), account("peter"));
+}
+
+#[test]
+#[should_panic(expected = "this line is not queued for a bank")]
+fn the_bank_partner_cannot_take_a_paid_line() {
+    let mut c = peter_queued();
+    act("service", 6 * MINUTE);
+    c.report_bank_sent("exit".into(), account("lena"));
+}
+
+#[test]
+fn a_bank_holder_claims_and_the_bank_partner_sends_it() {
+    let mut c = opened();
+    fund(&mut c);
+    act("verifier", 0);
+    c.record_bank_verification(
+        account("tom"),
+        "cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34".into(),
+    );
+    act("tom", 0);
+    c.request_payout_change(account("tom"), PayoutMethod::Bank, None, None);
+    for (name, shares) in [("peter", 1_000), ("lena", 1_000)] {
+        act(name, 0);
+        c.confirm_holding("exit".into(), shares);
+    }
+    act("admin", 0);
+    c.execute_payout("exit".into());
+    assert_eq!(line(&c, "tom").outcome, Outcome::Held);
+
+    act("tom", 5 * MINUTE);
+    c.confirm_details();
+    c.confirm_holding("exit".into(), 1_000);
+    c.claim("acme".into(), None);
+    assert_eq!(line(&c, "tom").outcome, Outcome::Queued);
+    assert_adds_up(&c);
+
+    act("service", 6 * MINUTE);
+    c.report_bank_claim_sent("acme".into(), account("tom"));
+    callback(6 * MINUTE, true);
+    c.on_claim_transfer("acme".into(), account("tom"), U128(333_333), vec!["exit".into()]);
+    assert_eq!(line(&c, "tom").outcome, Outcome::Paid);
+    assert_adds_up(&c);
+}
+
 // ---------- Claims ----------
 
 fn tom_held() -> Contract {

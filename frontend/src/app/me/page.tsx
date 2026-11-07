@@ -114,6 +114,8 @@ function Login({ onDone }: { onDone: () => void }) {
               setWho(p);
               const r = await post('send-code', { key: p.key });
               setHint(String(r.data?.code ?? ''));
+              // Demo shortcut: fill in the code from the (simulated) text.
+              setCode(String(r.data?.code ?? ''));
             }}>
               <Avatar name={p.name} />
               <span>
@@ -129,7 +131,7 @@ function Login({ onDone }: { onDone: () => void }) {
     <>
       <h1>Hello {who.name}</h1>
       <p>We sent a 6-digit code to your phone ending <strong>{who.phoneEnd}</strong>.</p>
-      <p className="small muted">Demo: the text also pops up in the Demo inbox (bottom right). Your code is <strong className="mono">{hint}</strong>.</p>
+      <p className="small muted">Demo: we filled in the code from the text for you ({hint}). Just tap the button.</p>
       <label className="field">
         Code
         <input inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(e.target.value)} maxLength={6} />
@@ -204,6 +206,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
             if (r.ok) {
               const c = await post('send-code', { key: v.key });
               setHint(String(c.data?.code ?? ''));
+              setCode(String(c.data?.code ?? ''));
               setStep('code');
             }
           }}>{busy ? 'Checking with your bank…' : 'Continue to my bank'}</button>
@@ -217,7 +220,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
       <>
         <h1>Final security check</h1>
         <p className="big-text">We&apos;ve sent a 6-digit code to your phone ending <strong>{v.phoneEnd}</strong>.</p>
-        <p className="small muted">Demo: your code is <strong className="mono">{hint}</strong> (also in the Demo inbox).</p>
+        <p className="small muted">Demo: we filled in the code from the text for you ({hint}). Just tap Confirm.</p>
         <label className="field">
           Code
           <input inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} maxLength={6} />

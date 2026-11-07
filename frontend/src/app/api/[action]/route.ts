@@ -10,6 +10,7 @@ import { fraudScene } from '@/server/agent/fraud.ts';
 import { applyProposal, attackerTry, runPayout, simulateBounce } from '@/server/actions.ts';
 import { errorText } from '@/server/near.ts';
 import { resetRunning, resetStatus, startReset } from '@/server/reset.ts';
+import { sendBankPayouts } from '@/server/payout-service.ts';
 import { approveTransfer, estateCollects, estateView, prepareCase, unfreeze } from '@/server/estate.ts';
 
 export const runtime = 'nodejs';
@@ -62,6 +63,8 @@ export async function POST(req: Request, ctx: Ctx) {
         return NextResponse.json(await runPayout());
       case 'bounce':
         return NextResponse.json(await simulateBounce(body.holder));
+      case 'bank-send':
+        return NextResponse.json(await sendBankPayouts());
       case 'estate-prepare':
         return NextResponse.json(await prepareCase());
       case 'estate-approve':

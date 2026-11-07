@@ -125,3 +125,40 @@ export async function deliverIntents(d: Deployment = loadDeployment()): Promise<
   }
   return { delivered, errors };
 }
+
+// ---------- Bank payouts (simulated bank partner) ----------
+
+export type BankSend = { holderKey: string; holderName: string; amount: string; claim: boolean; ok: boolean; error?: string; tx?: string; at: string };
+
+export const loadBankSends = () => readJsonFile<BankSend[]>('bank-sends.json', []);
+
+/**
+ * The licensed bank partner (simulated) sends every queued bank payment and
+ * reports it with the payout service's key; the contract then marks it paid.
+ * In production the partner sends a real bank transfer first.
+ */
+export async function sendBankPayouts(d: Deployment = loadDeployment()): Promise<{ ok: boolean; message: string; error?: string }> {
+  const svc = signerAccount(d.payoutService.accountId, d.payoutService.privateKey);
+  const payout = await view<{ event: { lines: Record<string, { amount: string; outcome: string }> } } | null>(d.registry, 'get_payout', { event_id: d.eventId });
+  const queued = Object.entries(payout?.event.lines ?? {}).filter(([, l]) => l.outcome === 'queued');
+  if (!queued.length) return { ok: false, message: 'No bank payments are waiting.' };
+  const sent: BankSend[] = [];
+  for (const [holderId, line] of queued) {
+    const who = d.cast.find((c) => c.accountId === holderId);
+    let claim = false;
+    let r = await call(svc, d.registry, 'report_bank_sent', { event_id: d.eventId, holder_id: holderId }, { gasTera: 100 });
+    if (!r.ok && /queued claim/.test(r.error ?? '')) {
+      claim = true;
+      r = await call(svc, d.registry, 'report_bank_claim_sent', { company_id: d.companyId, holder_id: holderId }, { gasTera: 100 });
+    }
+    sent.push({ holderKey: who?.key ?? holderId, holderName: who?.name ?? holderId.slice(0, 8), amount: line.amount, claim, ok: r.ok, error: r.error, tx: txLink(r.txHash), at: new Date().toISOString() });
+  }
+  writeJsonFile('bank-sends.json', [...loadBankSends(), ...sent]);
+  const done = sent.filter((x) => x.ok).map((x) => x.holderName);
+  const failed = sent.filter((x) => !x.ok);
+  return {
+    ok: failed.length === 0,
+    message: done.length ? `Bank partner sent ${done.join(', ')}'s payment (simulated bank transfer). The contract marked it paid.` : 'Nothing was sent.',
+    error: failed.length ? failed.map((x) => `${x.holderName}: ${x.error}`).join('; ') : undefined,
+  };
+}

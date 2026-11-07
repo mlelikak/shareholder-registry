@@ -8,6 +8,7 @@ type EstateView = {
   held: string;
   estate: { accountId: string; balance: string } | null;
   documents: string;
+  representative: string | null;
   reportedBy?: string;
   reportedAt?: string;
   freezeTx?: string;
@@ -44,6 +45,7 @@ export default function EstatePage() {
   const { running, reply, run } = useAction(s.refresh);
   const v = s.data;
   const busy = running !== null;
+  const name = v?.holder.name ?? 'Erik';
 
   return (
     <main>
@@ -53,7 +55,7 @@ export default function EstatePage() {
           <h1>Estate review</h1>
           <p className="lead" style={{ marginBottom: 0 }}>
             When a shareholder dies, their record is frozen, the caretaker agent prepares the case inside the NEAR AI Cloud enclave, and only
-            a human reviewer can move the holding to the estate. In this demo the shareholder is the fictional Erik and the documents are
+            a human reviewer can move the holding to the estate. In this demo the shareholders are fictional (usually Erik) and the documents are
             simulated. On-chain, everything reads only &ldquo;frozen&rdquo; and &ldquo;transferred&rdquo;, never why.
           </p>
         </div>
@@ -66,13 +68,13 @@ export default function EstatePage() {
           <Step n={1} done={Boolean(v.reportedAt) || v.holder.state !== 'active'} title={`A helper reports the death${v.helpers.length ? ` (${v.helpers.join(', ')})` : ''}`}>
             {v.holder.state === 'active' ? (
               <p className="small" style={{ margin: 0 }}>
-                Open the <a href="/me">investor app</a>, log in as <strong>Jonas</strong> (Erik&apos;s son and helper) and tap &ldquo;Tell us Erik has
-                died&rdquo;. His own key freezes Erik&apos;s record, so payouts to Erik are held from then on.
+                Open the <a href="/me">investor app</a>, log in as <strong>{v.representative ?? 'the helper'}</strong> ({name}&apos;s helper) and tap
+                &ldquo;Tell us {name} has died&rdquo;. The helper&apos;s own key freezes {name}&apos;s record, so payouts to {name} are held from then on.
               </p>
             ) : (
               <p className="small" style={{ margin: 0 }}>
-                Erik&apos;s record is <strong>{v.holder.state}</strong>.{' '}
-                {v.freezeTx && <a href={v.freezeTx} target="_blank" rel="noreferrer">The freeze on the explorer ↗</a>} The agent emailed Jonas
+                {name}&apos;s record is <strong>{v.holder.state}</strong>.{' '}
+                {v.freezeTx && <a href={v.freezeTx} target="_blank" rel="noreferrer">The freeze on the explorer ↗</a>} The agent emailed {v.representative ?? 'the helper'}
                 the next steps (see the <a href="/inbox">Demo inbox</a>).
               </p>
             )}
@@ -110,7 +112,7 @@ export default function EstatePage() {
           <Step n={3} done={v.holder.state === 'transferred'} title="The human reviewer decides">
             {v.holder.state === 'transferred' ? (
               <p className="small" style={{ margin: 0 }}>
-                Approved: Erik&apos;s holding now belongs to the estate&apos;s account {v.holder.transferredTo && <span className="mono">{short(v.holder.transferredTo)}</span>}.{' '}
+                Approved: {name}&apos;s holding now belongs to the estate&apos;s account {v.holder.transferredTo && <span className="mono">{short(v.holder.transferredTo)}</span>}.{' '}
                 {v.approveTx && <a href={v.approveTx} target="_blank" rel="noreferrer">On the explorer ↗</a>}
               </p>
             ) : (
@@ -126,11 +128,11 @@ export default function EstatePage() {
             )}
           </Step>
 
-          <Step n={4} done={Boolean(v.collectTx)} title="The estate collects the money kept for Erik">
+          <Step n={4} done={Boolean(v.collectTx)} title={`The estate collects the money kept for ${name}`}>
             <p className="small" style={{ marginTop: 0 }}>
-              Kept for Erik: <strong>{euros(v.held)}</strong>
+              Kept for {name}: <strong>{euros(v.held)}</strong>
               {v.estate && <> · Estate account balance: <strong>{euros(v.estate.balance)}</strong> (test euros)</>}
-              {v.held === '0' && v.holder.state !== 'active' && !v.collectTx && <> · Run the exit payout first; Erik&apos;s share is held while he is frozen.</>}
+              {v.held === '0' && v.holder.state !== 'active' && !v.collectTx && <> · Run the exit payout first; {name}&apos;s share is held while the record is frozen.</>}
             </p>
             {v.collectTx ? (
               <a className="small" href={v.collectTx} target="_blank" rel="noreferrer">Paid to the estate, on the explorer ↗</a>

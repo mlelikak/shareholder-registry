@@ -63,8 +63,75 @@ function Deliveries({ s }: { s: DemoState }) {
   );
 }
 
+type HolderRow = DemoState['holders'][number];
+
+/** Where a shareholder's money stands after the payout, and what is still needed. */
+function payState(h: HolderRow): { done: boolean; text: string; todo?: string; link?: { href: string; label: string }; bank?: boolean } {
+  const o = h.line?.outcome;
+  if (o === 'paid') return { done: true, text: h.payoutMethod === 'intents' ? 'Paid through NEAR Intents' : h.payoutMethod === 'bank' ? 'Paid to their bank (simulated)' : 'Paid' };
+  if (o === 'queued') return { done: false, text: 'Waiting for the bank partner', todo: 'The licensed bank partner sends it (simulated).', bank: true };
+  if (o && o !== 'held') return { done: false, text: 'On its way', todo: 'Finishing on-chain; this takes a few seconds.' };
+  if (h.holderState === 'frozen')
+    return { done: false, text: 'Held: record frozen', todo: 'Lift a mistaken freeze, or pass the money to the estate.', link: { href: '/estate', label: 'Open Estate review' } };
+  if (h.holderState === 'transferred')
+    return { done: false, text: 'Held for the estate', todo: 'The estate collects it.', link: { href: '/estate', label: 'Open Estate review' } };
+  const steps = [
+    h.issues.includes('kyc_expired') || h.issues.includes('kyc_missing') ? 'identify again' : null,
+    'confirm their details',
+    h.confirmation !== 'confirmed' ? 'confirm their share count' : null,
+    'tap Collect my money',
+  ].filter(Boolean);
+  return { done: false, text: 'Held, safe in the contract', todo: `Log in as ${h.name} in the investor app and ${steps.join(', then ')}.`, link: { href: '/me', label: 'Open the investor app' } };
+}
+
+function EveryonePaid({ s, busy, running, onBank }: { s: DemoState; busy: boolean; running: string | null; onBank: () => void }) {
+  const rows = s.holders.map((h) => ({ h, p: payState(h) }));
+  const paid = rows.filter((r) => r.p.done).length;
+  const all = paid === rows.length;
+  return (
+    <section className="card">
+      <div className="card-head">
+        <div className="card-icon">{all ? <Icon name="check" /> : <Icon name="euro" />}</div>
+        <div>
+          <h2>{all ? 'Everyone is paid' : `${paid} of ${rows.length} shareholders paid`}</h2>
+          <div className="small muted">
+            {all
+              ? `All ${euros(s.event?.total)} reached its shareholders; the rounding remainder is kept for the company.`
+              : 'Nobody’s money is lost: anything not yet paid is held in the contract until the step below is done.'}
+          </div>
+        </div>
+      </div>
+      <div className="paid-list">
+        {rows.map(({ h, p }) => (
+          <div key={h.accountId} className="paid-row">
+            <span className={`mark ${p.done ? 'ok' : 'wait'}`}><Icon name={p.done ? 'check' : 'arrow'} /></span>
+            <div style={{ minWidth: 0 }}>
+              <div><strong>{h.name}</strong> · {euros(h.line?.amount)} · <span className={p.done ? 'good' : ''}>{p.text}</span></div>
+              {p.todo && (
+                <div className="small muted">
+                  {p.todo} {p.link && <a href={p.link.href}>{p.link.label} →</a>}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {rows.some((r) => r.p.bank) && (
+        <button className="btn" style={{ marginTop: 12 }} disabled={busy} onClick={onBank}>
+          {running === 'Bank' ? <><Spinner /> Sending…</> : <><Icon name="bank" /> Bank partner: send bank payments (simulated)</>}
+        </button>
+      )}
+    </section>
+  );
+}
+
 function nextStep(s: DemoState, agentRan: boolean): string {
-  if (s.event?.state === 'executed') return 'Payout done. Held shareholders can collect their money from the investor app once they are back.';
+  if (s.event?.state === 'executed') {
+    const open = s.holders.filter((h) => !payState(h).done);
+    return open.length
+      ? `Payout done. Still to finish: ${open.map((h) => h.name).join(', ')}. See “Is everyone paid?” below.`
+      : 'Everyone is paid. Nobody was phoned, and every amount matched its shares.';
+  }
   const proposed = s.proposals.find((p) => p.status === 'proposed');
   if (!agentRan) return 'Run the caretaker agent: it checks every shareholder and contacts the ones who need to act.';
   if (proposed) return 'Review the agent’s proposed correction and apply it if it looks right.';
@@ -210,6 +277,9 @@ export default function CompanyPage() {
             <Reply reply={reply?.label.startsWith('Bounce') ? reply : null} />
           </section>
 
+          {executed && <EveryonePaid s={s} busy={busy} running={running} onBank={() => run('Bank', 'bank-send')} />}
+          <Reply reply={reply?.label === 'Bank' ? reply : null} />
+
           {s.deliveries.length > 0 && <Deliveries s={s} />}
         </div>
 
@@ -302,7 +372,7 @@ export default function CompanyPage() {
                   {s.event.manifestRoot && (
                     <div className="notice info small" style={{ marginBottom: 0 }}>
                       <strong>Proof published before any money moved.</strong> Manifest root:
-                      <span className="mono">{s.event.manifestRoot}</span>
+                      <span className="mono" style={{ display: 'block', overflowWrap: 'anywhere' }}>{s.event.manifestRoot}</span>
                     </div>
                   )}
                 </>

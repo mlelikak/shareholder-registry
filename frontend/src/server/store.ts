@@ -112,6 +112,7 @@ export function resetDemoState() {
   writeJson('profiles.json', {});
   writeJson('deliveries.json', []);
   writeJson('estate.json', {});
+  writeJson('bank-sends.json', []);
 }
 
 /** Small off-chain JSON files next to the demo state (e.g. profiles). */

@@ -382,3 +382,10 @@ pre { background: var(--code-bg); padding: 14px; border-radius: var(--radius-sm)
 @keyframes dock-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes dock-slide { from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .dock-toast, .dock-panel { animation: none; } }
+
+/* ---------- Is everyone paid? ---------- */
+.paid-list { display: flex; flex-direction: column; }
+.paid-row { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-2); align-items: start; }
+.paid-row .mark { width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+.paid-row .mark.ok { background: var(--green-bg); color: var(--green); }
+.paid-row .mark.wait { background: var(--line-2); color: var(--muted); }

@@ -49,27 +49,39 @@ const save = (patch: Partial<EstateFile>) => writeJsonFile('estate.json', { ...l
 
 const result = (r: CallResult, okMessage: string) => ({ ok: r.ok, message: r.ok ? okMessage : 'Refused', error: r.error, explorer: txLink(r.txHash) });
 
-function erik(d: Deployment): CastMember {
-  const m = d.cast.find((c) => c.key === 'erik');
-  if (!m) throw new Error('This demo copy has no Erik');
+/**
+ * The shareholder this page is about: whoever is frozen or already passed to
+ * an estate (any helper can report a death), otherwise Erik, the demo's
+ * estate-flow shareholder.
+ */
+async function subject(d: Deployment): Promise<CastMember> {
+  const holders = d.cast.filter((c) => !c.helperOf);
+  const states = await Promise.all(holders.map((c) => view<{ state: string } | null>(d.registry, 'get_holder', { holder_id: c.accountId })));
+  const hit = holders.find((_, i) => states[i]?.state === 'frozen' || states[i]?.state === 'transferred');
+  const m = hit ?? d.cast.find((c) => c.key === 'erik');
+  if (!m) throw new Error('This demo copy has no estate-flow shareholder');
   return m;
 }
 
+const helperOf = (d: Deployment, m: CastMember) => d.cast.find((c) => c.helperOf === m.key);
+
 /** Simulated estate documents. Fictional people; nothing here goes on-chain. */
-export function simulatedDocuments(d: Deployment): string {
+export function simulatedDocuments(d: Deployment, m: CastMember): string {
   const estate = d.estate?.accountId ?? '(no estate account in this demo copy)';
+  const rep = helperOf(d, m)?.name ?? 'Karin';
+  const parties = m.key === 'erik' ? 'Jonas (son), Karin (daughter)' : `${rep} (daughter), Karin (sister)`;
   return `DOCUMENT 1 – Death certificate (simulated)
-Name of the deceased: Erik (fictional demo shareholder)
+Name of the deceased: ${m.name} (fictional demo shareholder)
 Date of death: last week
 Issued by: the civil registry
 
 DOCUMENT 2 – Estate inventory (simulated)
-Estate of Erik. Assets include ${d.companyName} shares held in the shareholder registry.
-Parties to the estate: Jonas (son), Karin (daughter).
-Representative of the estate: Jonas, authorised by both parties.
+Estate of ${m.name}. Assets include ${d.companyName} shares held in the shareholder registry.
+Parties to the estate: ${parties}.
+Representative of the estate: ${rep}, authorised by both parties.
 
 DOCUMENT 3 – Authorisation (simulated)
-Jonas and Karin authorise Jonas to receive payments for the estate.
+The parties authorise ${rep} to receive payments for the estate.
 Estate account for payments: ${estate}`;
 }
 
@@ -136,7 +148,8 @@ export async function reportDeath(d: Deployment, helper: CastMember): Promise<{ 
 
 /** Step 4: the agent reads the simulated documents inside the enclave and prepares the case. */
 export async function prepareCase(d: Deployment = loadDeployment()) {
-  const docs = simulatedDocuments(d);
+  const m = await subject(d);
+  const docs = simulatedDocuments(d, m);
   const reply = await chat(
     [
       {
@@ -163,7 +176,7 @@ export async function prepareCase(d: Deployment = loadDeployment()) {
     at: new Date().toISOString(),
   };
   const agent = signerAccount(d.agent.accountId, d.agent.privateKey);
-  const r = await call(agent, d.registry, 'log_agent_action', { holder_id: erik(d).accountId, action: 'case_prepared', summary_hash: c.summaryHash });
+  const r = await call(agent, d.registry, 'log_agent_action', { holder_id: m.accountId, action: 'case_prepared', summary_hash: c.summaryHash });
   c.logTx = txLink(r.txHash);
   save({ case: c });
   appendAgentLog([
@@ -172,7 +185,7 @@ export async function prepareCase(d: Deployment = loadDeployment()) {
       at: c.at,
       runId: 'estate',
       kind: 'finding',
-      holder: 'erik',
+      holder: m.key,
       title: 'Read the estate documents in the enclave and prepared the case for the human reviewer',
       detail: summary,
       summaryHash: c.summaryHash,
@@ -186,18 +199,20 @@ export async function prepareCase(d: Deployment = loadDeployment()) {
 /** Step 5: the human reviewer approves the transfer to the estate's account. */
 export async function approveTransfer(d: Deployment = loadDeployment()) {
   if (!d.estate) return { ok: false, message: 'This demo copy has no estate account; reset the demo.' };
+  const m = await subject(d);
   const reviewer = signerAccount(d.reviewer.accountId, d.reviewer.privateKey);
-  const r = await call(reviewer, d.registry, 'approve_transfer', { holder_id: erik(d).accountId, new_account: d.estate.accountId });
+  const r = await call(reviewer, d.registry, 'approve_transfer', { holder_id: m.accountId, new_account: d.estate.accountId });
   if (r.ok) save({ approveTx: txLink(r.txHash) });
-  return result(r, "Approved. Erik's holding and any money kept for him now belong to the estate.");
+  return result(r, `Approved. ${m.name}'s holding and any money kept for them now belong to the estate.`);
 }
 
 /** Lifts a freeze made by mistake (reviewer only). */
 export async function unfreeze(d: Deployment = loadDeployment()) {
+  const m = await subject(d);
   const reviewer = signerAccount(d.reviewer.accountId, d.reviewer.privateKey);
-  const r = await call(reviewer, d.registry, 'unfreeze_holder', { holder_id: erik(d).accountId });
+  const r = await call(reviewer, d.registry, 'unfreeze_holder', { holder_id: m.accountId });
   if (r.ok) writeJsonFile('estate.json', {});
-  return result(r, "Freeze lifted. Erik's record is active again.");
+  return result(r, `Freeze lifted. ${m.name}'s record is active again; ${m.name} can confirm their details and collect any money kept for them.`);
 }
 
 /** Step 6: the estate's account collects the money kept for Erik. */
@@ -205,16 +220,17 @@ export async function estateCollects(d: Deployment = loadDeployment()) {
   if (!d.estate) return { ok: false, message: 'This demo copy has no estate account; reset the demo.' };
   const self = signerAccount(d.estate.accountId, d.estate.privateKey);
   const relayer = d.relayer ? signerAccount(d.relayer.accountId, d.relayer.privateKey) : null;
-  const args = { company_id: d.companyId, holder_id: erik(d).accountId };
+  const m = await subject(d);
+  const args = { company_id: d.companyId, holder_id: m.accountId };
   const r = relayer
     ? await relayedCall(self, relayer, d.registry, 'claim', args, { gasTera: 100 })
     : await call(self, d.registry, 'claim', args, { gasTera: 100 });
   if (r.ok) save({ collectTx: txLink(r.txHash) });
-  return result(r, "The estate collected the money kept for Erik.");
+  return result(r, `The estate collected the money kept for ${m.name}.`);
 }
 
 export async function estateView(d: Deployment = loadDeployment()) {
-  const e = erik(d);
+  const e = await subject(d);
   const [holder, held, estateBalance] = await Promise.all([
     view<{ state: string; helpers: string[]; transfer?: { new_account: string } | null } | null>(d.registry, 'get_holder', { holder_id: e.accountId }),
     view<string>(d.registry, 'get_held_funds', { company_id: d.companyId, holder_id: e.accountId }),
@@ -226,7 +242,8 @@ export async function estateView(d: Deployment = loadDeployment()) {
     helpers: (holder?.helpers ?? []).map((id) => d.cast.find((c) => c.accountId === id)?.name ?? id.slice(0, 8)),
     held,
     estate: d.estate ? { accountId: d.estate.accountId, balance: estateBalance } : null,
-    documents: simulatedDocuments(d),
+    documents: simulatedDocuments(d, e),
+    representative: helperOf(d, e)?.name ?? null,
     ...f,
   };
 }
