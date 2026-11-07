@@ -247,6 +247,8 @@ pre { background: var(--code-bg); padding: 14px; border-radius: var(--radius-sm)
 .agent-card .btn.secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
 .agent-card a { color: #fff; }
 .agent-card .btn { background: #fff; color: #0a0a0a; }
+.agent-card .proposal .btn { background: var(--ink); color: var(--panel); }
+.agent-card .proposal .btn.secondary { background: var(--panel); color: var(--ink); border-color: var(--line); }
 .agent-report { font-size: 16.5px; line-height: 1.6; margin: 14px 0 0; }
 .enclave-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: rgba(255, 255, 255, 0.1); color: #e5e5e5; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.01em; }
 .enclave-badge svg { width: 14px; height: 14px; }
