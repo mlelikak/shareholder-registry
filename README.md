@@ -140,7 +140,7 @@ Every investor action shows "No fee for you: the platform paid it": a relayer su
 | Payout events, share-count confirmations and disputes, the payout checks, the manifest root and each investor's check | Emails and texts (shown in the Demo inbox) |
 | Payouts in a test euro token, held funds and claims, the rounding remainder | Strong identification and the KYC provider (a platform service records the result with the KYC key) |
 | Restricted keys per role; the network rejecting the agent's key | Bank account verification (a mock fingerprint) and bank payouts (shown as queued) |
-| Meta transactions: a relayer pays investors' fees | NEAR Intents delivery: the payout service releases Lena's route and reports the result on testnet, but no USDC is sent yet. Its 1Click quote is real (a mainnet dry run, nothing sent). A tiny real mainnet transfer is planned |
+| Meta transactions: a relayer pays investors' fees | NEAR Intents delivery: the payout service releases Lena's route and reports the result on testnet, but no USDC is sent. Its 1Click quote is real (a mainnet dry run, nothing sent) |
 | The caretaker agent's model on NEAR AI Cloud, with attestation and signed replies checked | Estate documents |
 | A second company (Bloom Foods) using the same verified details | The euro stablecoin: a test token (EURC or similar in production) |
 
@@ -221,7 +221,7 @@ TODO: list of contract tests, including:
 
 ## Limitations
 
-- The contract runs on testnet. NEAR Intents runs only on mainnet, so in the demo the Intents delivery is simulated (with a real 1Click quote); a real transfer would be a tiny amount from the builder's wallet, scaled down from the investor's calculated share.
+- The contract runs on testnet. NEAR Intents runs only on mainnet, so in the demo the Intents delivery is simulated (with a real 1Click quote). In production the payout service sends to the 1Click deposit address and polls its status; the contract side (release, report, hold on failure) is already real.
 - An investor who never confirms their share count is held, not paid. That is the safe default, but in a real exit it means more follow-up.
 - An open payout event can't be cancelled, and a correction can only involve holders already on the register.
 - In the demo, an open dispute blocks the whole payout. Production could hold just the disputed share and pay everyone else.
