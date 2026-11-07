@@ -36,6 +36,8 @@ export type Deployment = {
   agent: KeyedAccount & { allowedMethods: string[] };
   /** Platform account that pays investors' fees through meta transactions. */
   relayer?: KeyedAccount;
+  /** Other companies on the same registry (Bloom Foods): same verified details, separate admin. */
+  otherCompanies?: { id: string; name: string; admin: KeyedAccount }[];
   /** Estate flow: the estate's account, approved as Erik's successor by the reviewer. */
   estate?: KeyedAccount;
   /** Demo only: an unrelated account used by the attacker panel. */

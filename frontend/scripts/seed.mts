@@ -112,6 +112,8 @@ async function main() {
   const attacker = await createNamed('attacker', 0.1);
   // Pays investors' fees through meta transactions, so investors need no NEAR.
   const relayer = await createNamed('relay', 1);
+  // A second company on the same registry, with its own admin.
+  const bloomAdmin = await createNamed('bloom', 0.3);
 
   // The agent account gets ONLY a function-call key limited to its four methods
   // on the registry. No full-access key exists, so nothing else can be signed.
@@ -230,6 +232,16 @@ async function main() {
   for (const c of cast.filter((c) => !c.helperOf)) {
     report(`${c.name} holds ${SHARES}`, await call(adm, registry.accountId, 'set_holding', { company_id: COMPANY.id, holder_id: c.accountId, shares: SHARES }));
   }
+  // Bloom Foods uses the same verified details: no new sign-up for Maria or Peter.
+  const bloom = as(bloomAdmin);
+  report('Bloom Foods created', await call(bloom, registry.accountId, 'create_company', {
+    company_id: 'bloom',
+    name: 'Bloom Foods',
+    payout_token: token.accountId,
+    total_shares: 1000,
+  }));
+  report('Maria holds 600 Bloom Foods shares', await call(bloom, registry.accountId, 'set_holding', { company_id: 'bloom', holder_id: maria.accountId, shares: 600 }));
+  report('Peter holds 400 Bloom Foods shares', await call(bloom, registry.accountId, 'set_holding', { company_id: 'bloom', holder_id: who('peter').accountId, shares: 400 }));
   report('exit payout opened', await call(adm, registry.accountId, 'open_payout', { event_id: EVENT_ID, company_id: COMPANY.id, total: TOTAL }));
   report("Tom's email bounced", await call(adm, registry.accountId, 'mark_contact_bounced', { company_id: COMPANY.id, holder_id: who('tom').accountId }));
   report('exit funded', await call(adm, token.accountId, 'ft_transfer_call', { receiver_id: registry.accountId, amount: TOTAL, msg: EVENT_ID }, { depositYocto: 1n, gasTera: 100 }));
@@ -261,6 +273,7 @@ async function main() {
     attacker,
     relayer,
     estate,
+    otherCompanies: [{ id: 'bloom', name: 'Bloom Foods', admin: bloomAdmin }],
     cast,
   };
   saveDeployment(deployment);

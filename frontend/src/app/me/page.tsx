@@ -25,6 +25,7 @@ type InvestorView = {
   pendingChange: Pending | null;
   helpers: string[];
   company: { name: string; totalShares: number };
+  holdings: { name: string; shares: number }[];
   event: {
     state: string;
     sharesOnRecord?: number;
@@ -360,7 +361,16 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
       )}
       <div className="tile" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <Icon name={v.payoutMethod === 'bank' ? 'bank' : 'euro'} className="" />
-        <div><div className="small muted">Payments go to</div><strong>{payTo(v)}</strong></div>
+        <div>
+          <div className="small muted">Payments go to</div>
+          <strong>{payTo(v)}</strong>
+          {v.holdings.length > 0 && (
+            <div className="small muted">
+              for your shares in {v.holdings.map((h) => `${h.name} (${h.shares.toLocaleString('en')})`).join(' and ')}
+              {v.holdings.length > 1 && '. One set of details for every company.'}
+            </div>
+          )}
+        </div>
       </div>
 
       {v.pendingChange && (

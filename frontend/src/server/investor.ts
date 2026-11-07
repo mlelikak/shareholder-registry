@@ -89,6 +89,15 @@ type HolderRaw = {
   state: string;
 };
 
+/** Every company this investor holds shares in. One set of verified details serves them all. */
+async function holdingsOf(d: Deployment, accountId: string) {
+  const list = [{ id: d.companyId, name: d.companyName }, ...(d.otherCompanies ?? []).map((c) => ({ id: c.id, name: c.name }))];
+  const companies = await Promise.all(list.map((c) => view<{ holdings: Record<string, number> } | null>(d.registry, 'get_company', { company_id: c.id })));
+  return list
+    .map((c, i) => ({ name: c.name, shares: companies[i]?.holdings[accountId] ?? 0 }))
+    .filter((h) => h.shares > 0);
+}
+
 export async function investorView(key: string) {
   const d = loadDeployment();
   const m = member(d, key);
@@ -122,6 +131,7 @@ export async function investorView(key: string) {
     pendingChange: holder?.pending_change ? { ...holder.pending_change, bankLast4: p.pendingBankLast4 } : null,
     helpers: (holder?.helpers ?? []).map((id) => d.cast.find((c) => c.accountId === id)?.name ?? 'a helper'),
     company: { name: d.companyName, totalShares: company?.total_shares ?? 0 },
+    holdings: await holdingsOf(d, m.accountId),
     event: payout
       ? {
           state: payout.event.state,
