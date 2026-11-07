@@ -41,6 +41,7 @@ type HelperView = {
   name: string;
   helperOf: { key: string; name: string };
   isHelperOnChain: boolean;
+  helperOfState: string;
   pendingChange: Pending | null;
   currentBankLast4?: string;
 };
@@ -89,6 +90,7 @@ const ROLES: Record<string, string> = {
   lena: 'Shareholder · bought 200 shares from Peter',
   erik: 'Shareholder · everything in order',
   anna: "Maria's daughter · trusted helper",
+  jonas: "Erik's son · trusted helper (estate flow)",
 };
 
 function Login({ onDone }: { onDone: () => void }) {
@@ -462,7 +464,46 @@ function Helper({ v, refresh }: { v: HelperView; refresh: () => Promise<void> })
   const [reply, setReply] = useState<Reply | null>(null);
   const [busy, setBusy] = useState(false);
   const [fine, setFine] = useState(false);
+  const [death, setDeath] = useState<'closed' | 'confirm'>('closed');
   const p = v.pendingChange;
+  const name = v.helperOf.name;
+  if (v.helperOfState === 'frozen' || v.helperOfState === 'transferred')
+    return (
+      <>
+        <h1>Hello {v.name}.</h1>
+        <div className="tile">
+          <h2>{name}&apos;s shares are protected.</h2>
+          <p className="big-text">
+            Nothing can be changed, and any money for {name} is kept safe
+            {v.helperOfState === 'transferred' ? ' and now belongs to the estate.' : ' until the estate is settled.'}
+          </p>
+          <p>We emailed you what happens next. There is no deadline.</p>
+        </div>
+        <Done reply={reply} />
+      </>
+    );
+  if (death === 'confirm')
+    return (
+      <>
+        <h1>We&apos;re very sorry.</h1>
+        <p className="big-text">
+          This protects {name}&apos;s shares: nothing can be changed, and money for {name} is kept safe until the estate is settled. You
+          don&apos;t need any documents now.
+        </p>
+        <div className="stack">
+          <button className="btn big" disabled={busy} onClick={async () => {
+            setBusy(true);
+            const r = await post('report-death');
+            setReply(r);
+            await refresh();
+            setBusy(false);
+            setDeath('closed');
+          }}>{busy ? 'Protecting…' : `Yes, protect ${name}'s shares`}</button>
+          <button className="btn big secondary" disabled={busy} onClick={() => setDeath('closed')}>Go back</button>
+        </div>
+        <Done reply={reply} />
+      </>
+    );
   return (
     <>
       <h1>Hello {v.name}.</h1>
@@ -484,9 +525,15 @@ function Helper({ v, refresh }: { v: HelperView; refresh: () => Promise<void> })
           </div>
         </div>
       ) : (
-        <p className="big-text good">{fine ? 'Thank you. Nothing else to do.' : `Nothing needs your attention. ${v.helperOf.name}'s payouts go to the account ending ${v.currentBankLast4}.`}</p>
+        <p className="big-text good">{fine ? 'Thank you. Nothing else to do.' : `Nothing needs your attention. ${v.helperOf.name}'s payouts go to ${v.currentBankLast4 ? `the account ending ${v.currentBankLast4}` : 'their usual account'}.`}</p>
       )}
       <Done reply={reply} />
+      {v.isHelperOnChain && (
+        <>
+          <h2>Sad news?</h2>
+          <button className="btn big secondary" onClick={() => setDeath('confirm')}>Tell us {name} has died</button>
+        </>
+      )}
     </>
   );
 }

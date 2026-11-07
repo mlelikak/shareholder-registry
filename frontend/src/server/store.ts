@@ -36,6 +36,8 @@ export type Deployment = {
   agent: KeyedAccount & { allowedMethods: string[] };
   /** Platform account that pays investors' fees through meta transactions. */
   relayer?: KeyedAccount;
+  /** Estate flow: the estate's account, approved as Erik's successor by the reviewer. */
+  estate?: KeyedAccount;
   /** Demo only: an unrelated account used by the attacker panel. */
   attacker?: KeyedAccount;
   cast: CastMember[];
@@ -107,6 +109,7 @@ export function resetDemoState() {
   saveAgentLog([]);
   writeJson('profiles.json', {});
   writeJson('deliveries.json', []);
+  writeJson('estate.json', {});
 }
 
 /** Small off-chain JSON files next to the demo state (e.g. profiles). */

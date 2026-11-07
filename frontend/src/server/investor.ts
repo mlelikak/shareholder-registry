@@ -7,6 +7,7 @@ import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { call, relayedCall, signerAccount, txLink, view, type CallResult } from './near.ts';
 import { addToInbox, loadDeployment, type CastMember, type Deployment } from './store.ts';
 import { readJsonFile, writeJsonFile } from './store.ts';
+import { reportDeath } from './estate.ts';
 
 /** Off-chain profile details: never on-chain. */
 type Profile = { bankLast4?: string; pendingBankLast4?: string; loginCode?: { code: string; at: number } };
@@ -144,6 +145,7 @@ async function helperView(d: Deployment, m: CastMember) {
     name: m.name,
     helperOf: { key: of.key, name: of.name },
     isHelperOnChain: Boolean(holder?.helpers.includes(m.accountId)),
+    helperOfState: holder?.state ?? 'active',
     pendingChange: holder?.pending_change ? { ...holder.pending_change, bankLast4: profile(of.key).pendingBankLast4 } : null,
     currentBankLast4: profile(of.key).bankLast4,
     now: Date.now(),
@@ -215,6 +217,9 @@ export async function act(key: string, op: string, body: Record<string, string>)
       }
       return reply(r, `Cancelled. ${of.name}'s payouts still go to the usual account.`);
     }
+    case 'report-death':
+      if (!m.helperOf) return { ok: false, message: 'Only a helper can do this.' };
+      return reportDeath(d, m);
     case 'check-payment': {
       const line = (await view<{ event: { lines: Record<string, { shares: number; amount: string }> } }>(d.registry, 'get_payout', { event_id: d.eventId })).event.lines[m.accountId];
       if (!line) return { ok: false, message: 'There is no payment to check yet.' };

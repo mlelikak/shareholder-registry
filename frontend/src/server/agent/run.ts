@@ -38,7 +38,7 @@ const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 const newId = () => randomBytes(6).toString('hex');
 
 /** Words that must never reach an investor: no tech terms, no requests for secrets. */
-const BANNED = /\b(wallet|blockchain|crypto|token|seed phrase|private key|password|pin code|near protocol|smart contract|http|www\.)/i;
+export const BANNED = /\b(wallet|blockchain|crypto|token|seed phrase|private key|password|pin code|near protocol|smart contract|http|www\.)/i;
 
 export type RunResult = {
   runId: string;
@@ -88,13 +88,13 @@ function alreadySent(): Set<string> {
 }
 
 /** Every number in a message must come from its facts, so the model can't invent one. */
-function numbersMatch(body: string, facts: string[]): boolean {
-  const nums = (t: string) => (t.replace(/(d),(d{3})/g, '$1$2').match(/d+/g) ?? []);
+export function numbersMatch(body: string, facts: string[]): boolean {
+  const nums = (t: string) => (t.replace(/(\d),(\d{3})/g, '$1$2').match(/\d+/g) ?? []);
   const allowed = new Set(nums(facts.join(' ')));
   return nums(body).every((n) => allowed.has(n));
 }
 
-function parseJson(text: string): Record<string, unknown> | null {
+export function parseJson(text: string): Record<string, unknown> | null {
   const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
   try {
     return JSON.parse(cleaned);

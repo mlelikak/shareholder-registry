@@ -22,6 +22,7 @@ export async function recycleDeployment(
     { ...d.payoutService, label: 'payout service' },
     ...(d.attacker ? [{ ...d.attacker, label: 'attacker' }] : []),
     ...(d.relayer ? [{ ...d.relayer, label: 'fee relayer' }] : []),
+    ...(d.estate ? [{ ...d.estate, label: 'estate account' }] : []),
     // Contracts last, after everyone who has a balance on them is gone.
     { accountId: d.registry, privateKey: '', label: 'registry contract' },
     { accountId: d.token, privateKey: '', label: 'test euro token' },

@@ -10,6 +10,7 @@ import { fraudScene } from '@/server/agent/fraud.ts';
 import { applyProposal, attackerTry, runPayout, simulateBounce } from '@/server/actions.ts';
 import { errorText } from '@/server/near.ts';
 import { resetRunning, resetStatus, startReset } from '@/server/reset.ts';
+import { approveTransfer, estateCollects, estateView, prepareCase, unfreeze } from '@/server/estate.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     if (action === 'inbox') return NextResponse.json(loadInbox().slice().reverse());
     if (action === 'agent-log') return NextResponse.json(loadAgentLog().slice().reverse());
     if (action === 'reset-status') return NextResponse.json(resetStatus());
+    if (action === 'estate') return NextResponse.json(await estateView());
     return fail('unknown action', 404);
   } catch (e) {
     return fail(e);
@@ -60,6 +62,14 @@ export async function POST(req: Request, ctx: Ctx) {
         return NextResponse.json(await runPayout());
       case 'bounce':
         return NextResponse.json(await simulateBounce(body.holder));
+      case 'estate-prepare':
+        return NextResponse.json(await prepareCase());
+      case 'estate-approve':
+        return NextResponse.json(await approveTransfer());
+      case 'estate-collect':
+        return NextResponse.json(await estateCollects());
+      case 'estate-unfreeze':
+        return NextResponse.json(await unfreeze());
       case 'attack':
         return NextResponse.json(await attackerTry(body.who === 'insider' ? 'insider' : 'outsider'));
       default:

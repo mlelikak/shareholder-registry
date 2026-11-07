@@ -46,6 +46,7 @@ const PEOPLE: Omit<CastMember, 'accountId' | 'privateKey'>[] = [
   { key: 'lena', name: 'Lena', email: 'lena@example.com', phone: '+00 555 0104' },
   { key: 'erik', name: 'Erik', email: 'erik@example.com', phone: '+00 555 0105' },
   { key: 'anna', name: 'Anna', email: 'anna@example.com', phone: '+00 555 0106', helperOf: 'maria' },
+  { key: 'jonas', name: 'Jonas', email: 'jonas@example.com', phone: '+00 555 0107', helperOf: 'erik' },
 ];
 
 /** Keys are saved to disk before they are used, so a stopped run can resume. */
@@ -134,6 +135,10 @@ async function main() {
     if (!(await accountExists(accountId))) report(`create ${p.name}'s random account`, await send(funder, accountId, [actions.transfer(NEAR(0.1))]));
     cast.push({ ...p, accountId, privateKey: kp.toString() });
   }
+  // The estate's account (estate flow): a random account like everyone else's.
+  const estateKey = keyFor('estate');
+  const estate: KeyedAccount = { accountId: keyToImplicitAddress(estateKey.getPublicKey()), privateKey: estateKey.toString() };
+  if (!(await accountExists(estate.accountId))) report("create the estate's random account", await send(funder, estate.accountId, [actions.transfer(NEAR(0.1))]));
   stopIfFailed();
   const who = (key: string) => cast.find((c) => c.key === key)!;
   const as = (k: KeyedAccount) => signerAccount(k.accountId, k.privateKey);
@@ -176,7 +181,7 @@ async function main() {
   stopIfFailed();
 
   console.log('== token registration');
-  for (const id of [registry.accountId, payoutService.accountId, ...cast.filter((c) => !c.helperOf).map((c) => c.accountId)]) {
+  for (const id of [registry.accountId, payoutService.accountId, estate.accountId, ...cast.filter((c) => !c.helperOf).map((c) => c.accountId)]) {
     report(`token account for ${id.slice(0, 16)}`, await call(funder, token.accountId, 'storage_deposit', { account_id: id }, { depositYocto: NEAR(0.0025) }));
     await pause(250);
   }
@@ -209,6 +214,7 @@ async function main() {
     new_route: { chain: 'base', asset_id: 'usdc', address: process.env.LENA_BASE_ADDRESS ?? '0x1111111111111111111111111111111111111111' },
   }));
   report('Maria adds Anna as her helper', await call(as(maria), registry.accountId, 'add_helper', { helper_id: who('anna').accountId }));
+  report('Erik adds his son Jonas as his helper', await call(as(who('erik')), registry.accountId, 'add_helper', { helper_id: who('jonas').accountId }));
   // Maria's phone number changed recently: any change she asks for now waits longer.
   report("Maria's phone change recorded", await call(as(maria), registry.accountId, 'record_contact_change', {}));
   stopIfFailed();
@@ -254,6 +260,7 @@ async function main() {
     agent: { accountId: agentId, privateKey: agentKey.toString(), allowedMethods: AGENT_METHODS },
     attacker,
     relayer,
+    estate,
     cast,
   };
   saveDeployment(deployment);
