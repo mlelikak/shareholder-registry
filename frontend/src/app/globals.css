@@ -345,3 +345,40 @@ pre { background: var(--code-bg); padding: 14px; border-radius: var(--radius-sm)
   body { background: #fff; color: #000; }
   .phone { border: none; box-shadow: none; }
 }
+
+/* ---------- Demo inbox dock (every page) ---------- */
+.dock-button {
+  position: fixed; right: 16px; bottom: 16px; z-index: 40;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow-lg);
+}
+.dock-button:hover { background: var(--line-2); }
+.dock-badge {
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+  background: var(--brand); color: var(--panel); font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+}
+.dock-toast {
+  position: fixed; right: 16px; bottom: 72px; z-index: 41; width: min(380px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  border-left: 4px solid var(--brand); background: var(--panel); color: var(--ink);
+  font: inherit; cursor: pointer; box-shadow: var(--shadow-lg);
+  animation: dock-in 0.2s ease-out;
+}
+.dock-toast-head { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.dock-toast .subject { font-weight: 650; }
+.dock-toast-body { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 15px; }
+.dock-backdrop { position: fixed; inset: 0; z-index: 42; background: rgba(15, 27, 45, 0.25); }
+.dock-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 43; width: min(440px, 100vw);
+  display: flex; flex-direction: column; background: var(--bg); border-left: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  animation: dock-slide 0.2s ease-out;
+}
+.dock-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.dock-panel-body { overflow-y: auto; padding: 0 16px 16px; }
+.dock-panel .msg { grid-template-columns: 36px 1fr; gap: 10px; padding: 14px 0; }
+@keyframes dock-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes dock-slide { from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dock-toast, .dock-panel { animation: none; } }

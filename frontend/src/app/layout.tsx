@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Nav } from '@/app/ui';
+import { InboxDock } from '@/app/inbox-dock';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </div>
         <Nav />
         {children}
+        <InboxDock />
       </body>
     </html>
   );

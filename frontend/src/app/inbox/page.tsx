@@ -1,7 +1,8 @@
 'use client';
 
 import type { InboxMessage } from '@/server/store.ts';
-import { Avatar, Icon, Loading, usePoll } from '@/app/ui';
+import { Loading, usePoll } from '@/app/ui';
+import { MessageItem } from '@/app/inbox-dock';
 
 export default function InboxPage() {
   const inbox = usePoll<InboxMessage[]>('/api/inbox', 8000);
@@ -24,24 +25,7 @@ export default function InboxPage() {
         ) : inbox.data.length === 0 ? (
           <p className="muted">No messages yet.</p>
         ) : (
-          inbox.data.map((m) => (
-            <div key={m.id} className={`msg ${m.channel}`}>
-              <Avatar name={m.toName} />
-              <div style={{ minWidth: 0 }}>
-                <div className="t-meta row" style={{ gap: 6, marginBottom: 6 }}>
-                  <Icon name={m.channel === 'text' ? 'chat' : m.channel === 'helper' ? 'alert' : 'mail'} className="" />
-                  <span>
-                    {m.channel === 'text' ? 'Text' : m.channel === 'helper' ? 'Helper alert' : 'Email'} to <strong>{m.toName}</strong> · from{' '}
-                    {m.from === 'agent' ? 'the caretaker agent' : 'the platform'} · {new Date(m.at).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="bubble">
-                  {m.subject && <div className="subject">{m.subject}</div>}
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{m.body}</div>
-                </div>
-              </div>
-            </div>
-          ))
+          inbox.data.map((m) => <MessageItem key={m.id} m={m} />)
         )}
       </section>
     </main>

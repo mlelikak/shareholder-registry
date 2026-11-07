@@ -108,7 +108,7 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 
 Live app (NEAR testnet): TODO. To run it yourself, see [Run locally](#run-locally).
 
-Everything happens on NEAR testnet with test tokens. The **Demo inbox** shows the emails and texts that would be sent, including login codes. Logins are a labelled mock: pick a person and type the code from the Demo inbox (the screen also shows it).
+Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom right on every page) shows the emails and texts that would be sent, and each new one pops up where you are, including login codes. Logins are a labelled mock: pick a person and type the code (the login screen shows it too).
 
 **First open Reset and click Reset demo** (about 2½ minutes). The demo clock is fast (details go stale after 10 minutes, a bank change waits 2–5 minutes) and the contract has no way to rewrite dates, so a reset puts a fresh copy of the contract on testnet and seeds the cast again. Run the exit payout between about **5 and 20 minutes after a reset**; the Reset page shows the window.
 

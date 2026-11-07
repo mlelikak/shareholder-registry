@@ -129,7 +129,7 @@ function Login({ onDone }: { onDone: () => void }) {
     <>
       <h1>Hello {who.name}</h1>
       <p>We sent a 6-digit code to your phone ending <strong>{who.phoneEnd}</strong>.</p>
-      <p className="small muted">Demo: the text is in the Demo inbox. Your code is <strong className="mono">{hint}</strong>.</p>
+      <p className="small muted">Demo: the text also pops up in the Demo inbox (bottom right). Your code is <strong className="mono">{hint}</strong>.</p>
       <label className="field">
         Code
         <input inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(e.target.value)} maxLength={6} />
