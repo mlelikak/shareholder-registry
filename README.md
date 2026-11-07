@@ -132,7 +132,7 @@ Steps for a judge (the in-app **Demo inbox** shows the emails and text codes tha
 **Also built, not in the video:**
 
 - **Honest bank change:** after a reset, make Maria's change as above and, as Anna, tap **That's fine**. After the wait, the new account is active. Bloom Foods uses the same details.
-- **Estate flow** (if built): after a reset, open the app as **Erik's son (helper)** and tap **Report a death**. → Erik's record is frozen; on the explorer the transaction says only `freeze_holder`. Run the payout. The agent explains the next steps in the Demo inbox, reads the (simulated) estate documents in the enclave, and shows its attestation in the Agent log. As the **Estate reviewer**, approve the transfer. → Erik's held money goes to the estate account.
+- **Estate flow**: after a reset (wait 5 minutes for Jonas's helper role to start), open the investor app as **Jonas**, Erik's son and helper, and tap **Tell us Erik has died**. → Erik's record is frozen; on the explorer the transaction says only `freeze_holder`, and the platform paid the fee. The agent emails Jonas the next steps (Demo inbox). Open **Estate review** and click **Agent: read the documents**. → The agent reads the simulated estate documents inside the NEAR AI Cloud enclave and prepares the case; code checks that the estate account matches. Run the exit payout (Erik's share is held), then, as the human reviewer, **Approve transfer to the estate** and **Estate: collect the money**. → Erik's held money goes to the estate's account. **Lift the freeze** undoes a mistaken report; only the reviewer's key can do either.
 
 ## What is real and what is simulated
 
