@@ -112,10 +112,10 @@ Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom 
 
 **First open Reset and click Reset demo** (about 2½ minutes). The demo clock is fast (details go stale after 10 minutes, a bank change waits 2–5 minutes) and the contract has no way to rewrite dates, so a reset puts a fresh copy of the contract on testnet and seeds the cast again. Run the exit payout between about **5 and 20 minutes after a reset**; the Reset page shows the window.
 
-1. Open **Company** (Acme's dashboard). → The exit payout is open and funded. Readiness: **2 of 5** ready; KYC current: 80%; the check "No share counts in dispute" is red.
+1. Open **Company** (Acme's dashboard). Acme has 25,000 shares: two VC funds (Larkspur Ventures, Quarry Hill Capital) and five individual investors with 1,000 each. → The exit payout of €25,000 is open and funded. Readiness: **4 of 7** ready; KYC current: 86%; the check "No share counts in dispute" is red.
 2. Click **Run the caretaker agent**. → Its report (written by the model inside the NEAR AI Cloud enclave, attestation in the **Agent log**): Tom's email bounced, Peter's identity check expired, Peter says 800 shares and Lena says 1,200 where the register shows 1,000 each. It texts Tom and pauses his payouts, emails Peter and Lena (**Demo inbox**), and proposes one correction: an unrecorded transfer of 200 shares from Peter to Lena.
 3. Open the **Investor app** as **Peter** and tap **Identify me again** (simulated). → His identity check is current.
-4. On the dashboard, click **Apply correction**. → Peter shows 800 and Lena 1,200, both unconfirmed. In the investor app, Peter and Lena each confirm their new number. → Readiness: **4 of 5**, Tom held.
+4. On the dashboard, click **Apply correction**. → Peter shows 800 and Lena 1,200, both unconfirmed. In the investor app, Peter and Lena each confirm their new number. → Readiness: **6 of 7**, Tom held.
 5. Open **Attacker**: **Redirect Maria's payout** (a stranger) and **Try as the company admin**. → Both refused by the contract: "only the holder can request a payout change", with explorer links.
 6. Still on Attacker, **Send the fraud email** to the agent. → The AI says "refuse"; then the agent's own key is used to try the change anyway, and the NEAR network rejects it: that key may only flag, pause, freeze and log.
 7. As **Maria (72)**, tap **Change my bank account** → **No, this is my own decision** → enter 4 digits → **Continue to my bank** (simulated) → the code. → Saved, but it takes 5 minutes instead of 2, because her phone number changed recently.
@@ -123,7 +123,7 @@ Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom 
 9. On the dashboard, the checks are green: click **Run exit payout**. → The contract publishes the manifest root, then pays: Peter and Erik receive test euros, Maria's bank payout is queued (simulated), Tom's share is held, and **Lena** is paid through NEAR Intents as USDC on Base (delivery simulated; a real 1Click quote is shown). Totals reconcile to the smallest unit, with a 3-unit rounding remainder kept for the company.
 10. As Maria, tap **Check this payment**. → ✓ her amount matches her shares and her line verifies against the published manifest root.
 11. As **Tom**, tap **Yes, all correct**, confirm his share count, then **Collect my money**. → His held share is paid.
-12. On the dashboard, **Is everyone paid?** lists what is still needed per shareholder. Click **Bank partner: send bank payments (simulated)**. → Maria's bank payment is reported sent and the contract marks it paid. → **Everyone is paid**: €5,000.00 reached its shareholders, plus the rounding remainder kept for the company.
+12. On the dashboard, **Is everyone paid?** lists what is still needed per shareholder. Click **Bank partner: send bank payments (simulated)**. → Maria's bank payment is reported sent and the contract marks it paid. → **Everyone is paid**: €25,000.00 reached its shareholders, plus the rounding remainder kept for the company.
 
 If someone is frozen (for example a helper reported a death by mistake), **Estate review** can lift the freeze or pass the money to the estate; the checklist links there.
 

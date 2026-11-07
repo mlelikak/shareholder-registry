@@ -4,7 +4,7 @@
 // per screen, plain words, no countdown pressure, "Call us" always visible.
 
 import { useCallback, useEffect, useState } from 'react';
-import { Avatar, euros, Icon, Spinner } from '@/app/ui';
+import { Avatar, euros, Icon, Spinner, isFund } from '@/app/ui';
 
 type Person = { key: string; name: string; phoneEnd: string; helperOf?: string };
 type Pending = { method: string; effective_at: number; extended: boolean; bankLast4?: string };
@@ -84,12 +84,17 @@ function Done({ reply }: { reply: Reply | null }) {
 
 // ---------- Login (simulated) ----------
 
+/** People are greeted by first name; funds by their full name. */
+const greet = (name: string) => (isFund(name) ? name : name.split(' ')[0]);
+
 const ROLES: Record<string, string> = {
   maria: 'Shareholder, 72 · target of a scam call',
   tom: 'Shareholder · his email bounced',
   peter: 'Shareholder · identity check expired',
   lena: 'Shareholder · bought 200 shares from Peter',
   erik: 'Shareholder · everything in order',
+  larkspur: 'VC fund · 12,000 shares · verified',
+  quarry: 'VC fund · 8,000 shares · verified',
   anna: "Maria's daughter · trusted helper",
   jonas: "Erik's son · trusted helper (estate flow)",
 };
@@ -129,7 +134,7 @@ function Login({ onDone }: { onDone: () => void }) {
     );
   return (
     <>
-      <h1>Hello {who.name}</h1>
+      <h1>Hello {greet(who.name)}</h1>
       <p>We sent a 6-digit code to your phone ending <strong>{who.phoneEnd}</strong>.</p>
       <p className="small muted">Demo: we filled in the code from the text for you ({hint}). Just tap the button.</p>
       <label className="field">
@@ -356,7 +361,7 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
 
   return (
     <>
-      <h1>Hello {v.name}.</h1>
+      <h1>Hello {greet(v.name)}.</h1>
       {v.status === 'green' && !needsDetails && !v.kycExpired ? (
         <div className="status-hero good-bg"><span className="good"><Icon name="check" /></span><div><strong>Your details are up to date.</strong><div className="small">Nothing to do right now.</div></div></div>
       ) : (
@@ -483,7 +488,7 @@ function Helper({ v, refresh }: { v: HelperView; refresh: () => Promise<void> })
   if (v.helperOfState === 'frozen' || v.helperOfState === 'transferred')
     return (
       <>
-        <h1>Hello {v.name}.</h1>
+        <h1>Hello {greet(v.name)}.</h1>
         <div className="tile">
           <h2>{name}&apos;s shares are protected.</h2>
           <p className="big-text">
@@ -519,7 +524,7 @@ function Helper({ v, refresh }: { v: HelperView; refresh: () => Promise<void> })
     );
   return (
     <>
-      <h1>Hello {v.name}.</h1>
+      <h1>Hello {greet(v.name)}.</h1>
       <p className="big-text">You are {v.helperOf.name}&apos;s trusted helper. You can stop changes {v.helperOf.name} didn&apos;t really want. You can&apos;t make changes or receive money.</p>
       {!v.isHelperOnChain && <p className="notice warn">Your helper role starts shortly: adding a helper also has a waiting period.</p>}
       {p && !fine ? (

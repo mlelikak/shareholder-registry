@@ -68,8 +68,9 @@ const helperOf = (d: Deployment, m: CastMember) => d.cast.find((c) => c.helperOf
 /** Simulated estate documents. Fictional people; nothing here goes on-chain. */
 export function simulatedDocuments(d: Deployment, m: CastMember): string {
   const estate = d.estate?.accountId ?? '(no estate account in this demo copy)';
-  const rep = helperOf(d, m)?.name ?? 'Karin';
-  const parties = m.key === 'erik' ? 'Jonas (son), Karin (daughter)' : `${rep} (daughter), Karin (sister)`;
+  const family = m.name.split(' ').slice(-1)[0];
+  const rep = helperOf(d, m)?.name ?? `Karin ${family}`;
+  const parties = m.key === 'erik' ? `${rep} (son), Karin ${family} (daughter)` : `${rep} (daughter), Karin ${family} (sister)`;
   return `DOCUMENT 1 – Death certificate (simulated)
 Name of the deceased: ${m.name} (fictional demo shareholder)
 Date of death: last week

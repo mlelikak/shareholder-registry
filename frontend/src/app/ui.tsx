@@ -46,9 +46,9 @@ export function Icon({ name, className }: { name: keyof typeof paths | string; c
 export function BrandMark() {
   return (
     <svg viewBox="0 0 32 32" className="brand-mark" aria-hidden="true">
-      <rect width="32" height="32" rx="9" fill="var(--brand)" />
-      <path d="M16 6.5l7.5 3.2v5.6c0 4.8-3.2 8.7-7.5 10.4-4.3-1.7-7.5-5.6-7.5-10.4V9.7L16 6.5z" fill="none" stroke="#5fe0d1" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M12.3 16.2l2.6 2.6 5-5.2" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="32" height="32" rx="8" fill="var(--ink)" />
+      <path d="M16 6.5l7.5 3.2v5.6c0 4.8-3.2 8.7-7.5 10.4-4.3-1.7-7.5-5.6-7.5-10.4V9.7L16 6.5z" fill="none" stroke="var(--panel)" strokeOpacity="0.55" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M12.3 16.2l2.6 2.6 5-5.2" fill="none" stroke="var(--panel)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -176,10 +176,13 @@ export function StatusPill({ status }: { status: 'green' | 'amber' | 'red' }) {
   return <span className={`pill ${status}`}><span className="dot" />{label}</span>;
 }
 
-const AVATAR_COLORS = ['#0f766e', '#1d4ed8', '#9333ea', '#c2410c', '#0369a1', '#be185d', '#4d7c0f'];
+/** Funds and other institutions get a square mark; people a round one. */
+export const isFund = (name: string) => /\b(Ventures|Capital|Fund|Partners|Holdings)\b/.test(name);
+
 export function Avatar({ name, size }: { name: string; size?: 'lg' }) {
-  const i = [...name].reduce((s, c) => s + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-  return <span className={`avatar ${size ?? ''}`} style={{ background: AVATAR_COLORS[i] }}>{name[0]}</span>;
+  const words = name.replace(/['’]s\b/g, '').split(/\s+/).filter((w) => /^[A-Za-z]/.test(w));
+  const initials = ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase();
+  return <span className={`avatar ${size ?? ''} ${isFund(name) ? 'fund' : ''}`}>{initials || '?'}</span>;
 }
 
 /** Test euro has 6 decimals. */

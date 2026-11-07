@@ -129,7 +129,7 @@ export async function readState(d: Deployment = loadDeployment()): Promise<DemoS
       held,
     });
   }
-  const order = ['maria', 'tom', 'peter', 'lena', 'erik'];
+  const order = ['maria', 'tom', 'peter', 'lena', 'erik', 'larkspur', 'quarry'];
   holders.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 
   const snapshotSum = payout ? Object.values(payout.event.snapshot).reduce((s, n) => s + n, 0) : 0;

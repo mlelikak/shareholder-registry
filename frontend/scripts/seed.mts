@@ -31,8 +31,13 @@ const CONFIG = {
   stale_after_ms: 10 * 60_000,
   verification_valid_for_ms: 10 * 60_000,
 };
-const TOTAL = '5000000003'; // 5,000 test euros (6 decimals) + 3 units to show the rounding remainder
-const SHARES = 1000;
+/** Shares in Acme: two VC funds and five individual investors. */
+const SHARES_OF: Record<string, number> = { larkspur: 12_000, quarry: 8_000 };
+const SHARES = 1000; // each individual investor
+const sharesOf = (key: string) => SHARES_OF[key] ?? SHARES;
+const TOTAL_SHARES = 5 * SHARES + 12_000 + 8_000; // 25,000
+// €1 per share in test euros (6 decimals), plus 3 units to show the rounding remainder.
+const TOTAL = `${TOTAL_SHARES}000003`;
 const COMPANY = { id: 'acme', name: 'Acme' };
 const EVENT_ID = 'acme-exit';
 
@@ -40,13 +45,16 @@ const EVENT_ID = 'acme-exit';
 const AGENT_METHODS = ['flag_holder', 'pause_holder', 'freeze_holder', 'log_agent_action'];
 
 const PEOPLE: Omit<CastMember, 'accountId' | 'privateKey'>[] = [
-  { key: 'maria', name: 'Maria', email: 'maria@example.com', phone: '+00 555 0101' },
-  { key: 'tom', name: 'Tom', email: 'tom@example.com', phone: '+00 555 0102' },
-  { key: 'peter', name: 'Peter', email: 'peter@example.com', phone: '+00 555 0103' },
-  { key: 'lena', name: 'Lena', email: 'lena@example.com', phone: '+00 555 0104' },
-  { key: 'erik', name: 'Erik', email: 'erik@example.com', phone: '+00 555 0105' },
-  { key: 'anna', name: 'Anna', email: 'anna@example.com', phone: '+00 555 0106', helperOf: 'maria' },
-  { key: 'jonas', name: 'Jonas', email: 'jonas@example.com', phone: '+00 555 0107', helperOf: 'erik' },
+  { key: 'maria', name: 'Maria Keller', email: 'maria.keller@example.com', phone: '+00 555 0101' },
+  { key: 'tom', name: 'Tom Hartley', email: 'tom.hartley@example.com', phone: '+00 555 0102' },
+  { key: 'peter', name: 'Peter Novak', email: 'peter.novak@example.com', phone: '+00 555 0103' },
+  { key: 'lena', name: 'Lena Ortiz', email: 'lena.ortiz@example.com', phone: '+00 555 0104' },
+  { key: 'erik', name: 'Erik Lund', email: 'erik.lund@example.com', phone: '+00 555 0105' },
+  // Fictional VC funds: verified like everyone else, and simply ready on exit day.
+  { key: 'larkspur', name: 'Larkspur Ventures', email: 'operations@larkspur.example', phone: '+00 555 0201' },
+  { key: 'quarry', name: 'Quarry Hill Capital', email: 'finance@quarryhill.example', phone: '+00 555 0202' },
+  { key: 'anna', name: 'Anna Keller', email: 'anna.keller@example.com', phone: '+00 555 0106', helperOf: 'maria' },
+  { key: 'jonas', name: 'Jonas Lund', email: 'jonas.lund@example.com', phone: '+00 555 0107', helperOf: 'erik' },
 ];
 
 /** Keys are saved to disk before they are used, so a stopped run can resume. */
@@ -227,10 +235,10 @@ async function main() {
     company_id: COMPANY.id,
     name: COMPANY.name,
     payout_token: token.accountId,
-    total_shares: SHARES * 5,
+    total_shares: TOTAL_SHARES,
   }));
   for (const c of cast.filter((c) => !c.helperOf)) {
-    report(`${c.name} holds ${SHARES}`, await call(adm, registry.accountId, 'set_holding', { company_id: COMPANY.id, holder_id: c.accountId, shares: SHARES }));
+    report(`${c.name} holds ${sharesOf(c.key)}`, await call(adm, registry.accountId, 'set_holding', { company_id: COMPANY.id, holder_id: c.accountId, shares: sharesOf(c.key) }));
   }
   // Bloom Foods uses the same verified details: no new sign-up for Maria or Peter.
   const bloom = as(bloomAdmin);
@@ -249,6 +257,8 @@ async function main() {
 
   console.log('== holders answer "Is your share count right?"');
   report('Maria: 1,000 ✓', await call(as(maria), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 1000 }));
+  report('Larkspur Ventures: 12,000 ✓', await call(as(who('larkspur')), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 12_000 }));
+  report('Quarry Hill Capital: 8,000 ✓', await call(as(who('quarry')), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 8_000 }));
   report('Erik: 1,000 ✓', await call(as(who('erik')), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 1000 }));
   report('Peter says 800', await call(as(who('peter')), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 800 }));
   report('Lena says 1,200', await call(as(lena), registry.accountId, 'confirm_holding', { event_id: EVENT_ID, shares: 1200 }));
