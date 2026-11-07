@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { act, checkLoginCode, investorView, people, sendLoginCode } from '@/server/investor.ts';
 import { errorText } from '@/server/near.ts';
+import { resetRunning } from '@/server/reset.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,7 @@ export async function POST(req: Request, ctx: Ctx) {
     const key = await who();
     if (!key) return NextResponse.json({ ok: false, message: 'Please log in first.' }, { status: 401 });
     if (busy) return NextResponse.json({ ok: false, message: 'Still working on your last step. Please try again in a moment.' }, { status: 429 });
+    if (resetRunning()) return NextResponse.json({ ok: false, message: 'The demo is being reset. Please try again in a few minutes.' }, { status: 409 });
     busy = true;
     try {
       return NextResponse.json(await act(key, op, body));

@@ -63,6 +63,7 @@ const MAIN = [
 const DEMO = [
   { href: '/inbox', label: 'Demo inbox', icon: 'mail' },
   { href: '/attacker', label: 'Attacker', icon: 'shield' },
+  { href: '/reset', label: 'Reset', icon: 'sparkle' },
 ];
 
 export function Nav() {
