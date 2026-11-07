@@ -170,7 +170,8 @@ export async function act(key: string, op: string, body: Record<string, string>)
       // Simulated strong identification; the simulated KYC provider records a new check with its own key.
       const kyc = signerAccount(d.kyc.accountId, d.kyc.privateKey);
       const r = await call(kyc, d.registry, 'record_kyc', { holder_id: m.accountId, valid_until: Date.now() + 365 * 24 * 3600_000, screening: 'clear' });
-      return reply(r, 'Thank you. Your identity check is renewed for a year.');
+      // The KYC provider signs and pays: the investor pays nothing here either.
+      return { ...reply(r, 'Thank you. Your identity check is renewed for a year.'), feePaidByPlatform: r.ok };
     }
     case 'new-phone':
       return reply(await me('record_contact_change', {}), 'Thank you. Your new phone number is saved.');
@@ -184,7 +185,7 @@ export async function act(key: string, op: string, body: Record<string, string>)
       const verifier = signerAccount(d.verifier.accountId, d.verifier.privateKey);
       const r = await call(verifier, d.registry, 'record_bank_verification', { holder_id: m.accountId, fingerprint });
       if (r.ok) saveProfile(key, { pendingBankLast4: last4 });
-      return reply(r, 'Your bank confirmed the account is yours.');
+      return { ...reply(r, 'Your bank confirmed the account is yours.'), feePaidByPlatform: r.ok };
     }
     case 'bank-request': {
       if (!checkLoginCode(key, body.code ?? '')) return { ok: false, message: 'That code is not right. Please check the text we sent.' };
