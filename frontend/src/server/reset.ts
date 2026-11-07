@@ -18,6 +18,8 @@ export type ResetStatus = {
   to?: string;
   startedAt?: string;
   endedAt?: string;
+  /** When the current demo copy was seeded; the demo window is measured from here. */
+  seededAt?: string;
   log: string[];
 };
 
@@ -42,7 +44,9 @@ export function resetStatus(): ResetStatus {
   const log = existsSync(LOG) ? readFileSync(LOG, 'utf8').split(/\r?\n/).filter(Boolean).slice(-14) : [];
   // A reset that was killed mid-way still says "seeding"; show it as stopped.
   const phase = !running && (s.phase === 'recycling' || s.phase === 'seeding') ? 'failed' : s.phase;
-  return { ...s, phase, running, log };
+  const deployment = join(DIR, 'deployment.json');
+  const seededAt = existsSync(deployment) ? (JSON.parse(readFileSync(deployment, 'utf8')) as { createdAt?: string }).createdAt : undefined;
+  return { ...s, phase, running, log, seededAt };
 }
 
 export function startReset(): { ok: boolean; message: string } {
