@@ -108,7 +108,7 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 
 Live app (NEAR testnet): TODO. To run it yourself, see [Run locally](#run-locally).
 
-Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom right on every page) shows the emails and texts that would be sent, and each new one pops up where you are, including login codes. Logins are a labelled mock: pick a person and type the code (the login screen shows it too).
+Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom right on every page) shows the emails and texts that would be sent, and each new one pops up where you are, including login codes. Logins are a labelled mock: pick a person and the demo fills in the code from the text for you.
 
 **First open Reset and click Reset demo** (about 2½ minutes). The demo clock is fast (details go stale after 10 minutes, a bank change waits 2–5 minutes) and the contract has no way to rewrite dates, so a reset puts a fresh copy of the contract on testnet and seeds the cast again. Run the exit payout between about **5 and 20 minutes after a reset**; the Reset page shows the window.
 
@@ -123,6 +123,9 @@ Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom 
 9. On the dashboard, the checks are green: click **Run exit payout**. → The contract publishes the manifest root, then pays: Peter and Erik receive test euros, Maria's bank payout is queued (simulated), Tom's share is held, and **Lena** is paid through NEAR Intents as USDC on Base (delivery simulated; a real 1Click quote is shown). Totals reconcile to the smallest unit, with a 3-unit rounding remainder kept for the company.
 10. As Maria, tap **Check this payment**. → ✓ her amount matches her shares and her line verifies against the published manifest root.
 11. As **Tom**, tap **Yes, all correct**, confirm his share count, then **Collect my money**. → His held share is paid.
+12. On the dashboard, **Is everyone paid?** lists what is still needed per shareholder. Click **Bank partner: send bank payments (simulated)**. → Maria's bank payment is reported sent and the contract marks it paid. → **Everyone is paid**: €5,000.00 reached its shareholders, plus the rounding remainder kept for the company.
+
+If someone is frozen (for example a helper reported a death by mistake), **Estate review** can lift the freeze or pass the money to the estate; the checklist links there.
 
 Every investor action shows "No fee for you: the platform paid it": a relayer submits the investor's signed call as a meta transaction.
 
@@ -139,7 +142,7 @@ Every investor action shows "No fee for you: the platform paid it": a relayer su
 | Registry contract: who may change what, waiting periods, helper cancel, statuses, freeze and estate transfer | Login: a mock screen with a code in the Demo inbox; each person has a random testnet account whose key the demo site holds (in production: NEAR Auth on their phone) |
 | Payout events, share-count confirmations and disputes, the payout checks, the manifest root and each investor's check | Emails and texts (shown in the Demo inbox) |
 | Payouts in a test euro token, held funds and claims, the rounding remainder | Strong identification and the KYC provider (a platform service records the result with the KYC key) |
-| Restricted keys per role; the network rejecting the agent's key | Bank account verification (a mock fingerprint) and bank payouts (shown as queued) |
+| Restricted keys per role; the network rejecting the agent's key | Bank account verification (a mock fingerprint) and the bank transfer itself: a simulated bank partner reports it sent, and the contract (real) then marks it paid |
 | Meta transactions: a relayer pays investors' fees | NEAR Intents delivery: the payout service releases Lena's route and reports the result on testnet, but no USDC is sent. Its 1Click quote is real (a mainnet dry run, nothing sent) |
 | The caretaker agent's model on NEAR AI Cloud, with attestation and signed replies checked | Estate documents |
 | A second company (Bloom Foods) using the same verified details | The euro stablecoin: a test token (EURC or similar in production) |

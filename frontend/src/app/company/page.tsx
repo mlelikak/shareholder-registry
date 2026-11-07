@@ -152,6 +152,7 @@ export default function CompanyPage() {
   if (!s) return <main><Loading error={state.error} /></main>;
 
   const report = log.data?.find((e) => e.kind === 'report');
+  const paidCount = s ? s.holders.filter((h) => payState(h).done).length : 0;
   const attestation = log.data?.find((e) => e.kind === 'attestation');
   const executed = s.event?.state === 'executed';
   const allChecks = s.checks.every((c) => c.ok);
@@ -181,10 +182,10 @@ export default function CompanyPage() {
             <div className="row">
               <div>
                 <div className="big-num">
-                  {s.readiness.ready}
+                  {executed ? paidCount : s.readiness.ready}
                   <span className="muted" style={{ fontSize: 24, fontWeight: 600 }}> of {s.readiness.total}</span>
                 </div>
-                <div className="muted">shareholders ready to be paid</div>
+                <div className="muted">{executed ? 'shareholders paid' : 'shareholders ready to be paid'}</div>
               </div>
               <div className="spacer" />
               <div className="legend">
@@ -293,7 +294,14 @@ export default function CompanyPage() {
               </div>
             </div>
             {report ? (
-              <p className="agent-report">{report.detail}</p>
+              <>
+                {executed && (
+                  <p className="small" style={{ opacity: 0.75, margin: '0 0 6px' }}>
+                    Its report from before the payout, {new Date(report.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}:
+                  </p>
+                )}
+                <p className="agent-report" style={executed ? { opacity: 0.8 } : undefined}>{report.detail}</p>
+              </>
             ) : (
               <p className="muted">Not run yet. It reads the register, contacts shareholders and flags problems. Its key can only flag, pause, freeze and log.</p>
             )}
