@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { call, signerAccount, txLink, type CallResult } from './near.ts';
 import { appendAgentLog, loadAgentLog, loadDeployment, type Deployment } from './store.ts';
 import { latestProposals } from './state.ts';
+import { deliverIntents } from './payout-service.ts';
 
 export type ActionResult = { ok: boolean; message: string; error?: string; txHash?: string; explorer?: string };
 
@@ -45,7 +46,13 @@ export async function applyProposal(proposalId: string): Promise<ActionResult> {
 export async function runPayout(): Promise<ActionResult> {
   const d = loadDeployment();
   const r = await call(admin(d), d.registry, 'execute_payout', { event_id: d.eventId }, { gasTera: 300 });
-  return asResult(r, 'Exit payout run. Every line is now paid, queued or held.');
+  if (!r.ok) return asResult(r, '');
+  // The payout service then delivers the lines that go to another chain.
+  const intents = await deliverIntents(d);
+  const result = asResult(r, 'Exit payout run. Every line is now paid, queued or held.');
+  if (intents.delivered.length) result.message += ` Cross-chain: ${intents.delivered.map((x) => x.holderName).join(', ')} paid through NEAR Intents (delivery simulated).`;
+  if (intents.errors.length) result.error = `Payout service: ${intents.errors.join('; ')}`;
+  return result;
 }
 
 export async function simulateBounce(holderKey: string): Promise<ActionResult> {

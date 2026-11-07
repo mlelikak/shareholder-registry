@@ -15,6 +15,54 @@ const OUTCOME: Record<string, { text: string; cls: string }> = {
 };
 const PAY_VIA: Record<string, string> = { near: 'Own account', bank: 'Bank', intents: 'Other chain' };
 
+/** What the payout service did for shareholders paid on another chain. */
+function Deliveries({ s }: { s: DemoState }) {
+  return (
+    <section className="card">
+      <div className="card-head">
+        <div className="card-icon"><Icon name="chain" /></div>
+        <div>
+          <h2>Paid on another chain (NEAR Intents)</h2>
+          <div className="small muted">
+            The payout service&apos;s restricted key can only reveal a registered route and report the result. The contract repays the
+            service only after a successful delivery; anything else would be held for the shareholder.
+          </div>
+        </div>
+      </div>
+      {s.deliveries.map((x) => {
+        const chain = x.route.chain[0].toUpperCase() + x.route.chain.slice(1);
+        const usdc = (u?: string) => (u ? (Number(u) / 1e6).toFixed(4) : '–');
+        return (
+          <div key={x.at} className="stack" style={{ gap: 8 }}>
+            <div>
+              <strong>{x.holderName}</strong>: {euros(x.amount)} as {x.route.asset_id.toUpperCase()} on {chain} to{' '}
+              <span className="mono">{x.route.address.slice(0, 6)}…{x.route.address.slice(-4)}</span> ·{' '}
+              <span className={`pill ${x.result === 'SUCCESS' ? 'green' : 'amber'}`}>{x.result === 'SUCCESS' ? 'Delivered' : x.result}</span>
+            </div>
+            <div className="small">
+              {x.quote.ok ? (
+                <>Real 1Click quote (dry run, nothing sent): {usdc(x.quote.amountIn)} USDC on NEAR → {usdc(x.quote.amountOut)} USDC on {chain}, about {x.quote.timeEstimate} s.</>
+              ) : (
+                <>1Click quote unavailable: {x.quote.error}.</>
+              )}
+            </div>
+            {x.simulated && (
+              <div className="notice warn small">
+                Simulated delivery: the contract steps are real on testnet, but no USDC was sent. The quote uses a tiny demo amount, not the
+                test-euro share.
+              </div>
+            )}
+            <div className="small">
+              {x.releaseTx && <a href={x.releaseTx} target="_blank" rel="noreferrer">Route released ↗</a>}
+              {x.reportTx && <> · <a href={x.reportTx} target="_blank" rel="noreferrer">Result reported ↗</a></>}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function nextStep(s: DemoState, agentRan: boolean): string {
   if (s.event?.state === 'executed') return 'Payout done. Held shareholders can collect their money from the investor app once they are back.';
   const proposed = s.proposals.find((p) => p.status === 'proposed');
@@ -133,7 +181,9 @@ export default function CompanyPage() {
                       {executed && h.line ? (
                         <>
                           <div style={{ fontWeight: 600 }}>{euros(h.line.amount)}</div>
-                          <span className={`pill ${OUTCOME[h.line.outcome]?.cls ?? 'neutral'}`}>{OUTCOME[h.line.outcome]?.text ?? h.line.outcome}</span>
+                          <span className={`pill ${OUTCOME[h.line.outcome]?.cls ?? 'neutral'}`}>
+                            {h.line.outcome === 'paid' && h.payoutMethod === 'intents' ? 'Paid via Intents' : OUTCOME[h.line.outcome]?.text ?? h.line.outcome}
+                          </span>
                         </>
                       ) : (
                         <span className="small">{PAY_VIA[h.payoutMethod ?? ''] ?? '–'}</span>
@@ -155,6 +205,8 @@ export default function CompanyPage() {
             )}
             <Reply reply={reply?.label.startsWith('Bounce') ? reply : null} />
           </section>
+
+          {s.deliveries.length > 0 && <Deliveries s={s} />}
         </div>
 
         <div className="stack-lg">

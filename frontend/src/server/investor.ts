@@ -59,7 +59,7 @@ export function checkLoginCode(key: string, code: string): boolean {
 
 type HolderRaw = {
   payout_method: 'near' | 'intents' | 'bank';
-  intents_route: { chain: string; asset_id: string } | null;
+  intents_route: { chain: string; asset_id: string; address: string } | null;
   pending_change: { method: string; effective_at: number; extended: boolean } | null;
   helpers: string[];
   pending_helper_changes: unknown[];

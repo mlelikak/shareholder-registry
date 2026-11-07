@@ -1,6 +1,7 @@
 // Everything the screens show, read from the contract, plus the off-chain
 // demo pieces. Never includes private keys.
 
+import { loadDeliveries, type Delivery } from './payout-service.ts';
 import { view, accountLink, EXPLORER } from './near.ts';
 import { loadAgentLog, loadDeployment, loadInbox, type AgentLogEntry, type Deployment } from './store.ts';
 import { findIssues, summarize, type Config, type Holder, type HolderFinding, type ReadinessLine } from './agent/findings.ts';
@@ -71,6 +72,8 @@ export type DemoState = {
   checks: Check[];
   proposals: Proposal[];
   inboxCount: number;
+  /** Intents deliveries by the payout service (delivery simulated, quote real). */
+  deliveries: Delivery[];
   seededAt: string;
   now: number;
 };
@@ -182,6 +185,7 @@ export async function readState(d: Deployment = loadDeployment()): Promise<DemoS
     checks,
     proposals: latestProposals(loadAgentLog()),
     inboxCount: loadInbox().length,
+    deliveries: loadDeliveries(),
     seededAt: d.createdAt,
     now,
   };

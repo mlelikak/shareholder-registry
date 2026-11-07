@@ -203,7 +203,8 @@ async function main() {
   report('Lena chooses USDC on Base', await call(as(lena), registry.accountId, 'request_payout_change', {
     holder_id: lena.accountId,
     method: 'intents',
-    new_route: { chain: 'base', asset_id: 'usdc', address: '0x0000000000000000000000000000000000000000' },
+    // A sample address unless LENA_BASE_ADDRESS is set (the all-zero address is refused by 1Click).
+    new_route: { chain: 'base', asset_id: 'usdc', address: process.env.LENA_BASE_ADDRESS ?? '0x1111111111111111111111111111111111111111' },
   }));
   report('Maria adds Anna as her helper', await call(as(maria), registry.accountId, 'add_helper', { helper_id: who('anna').accountId }));
   // Maria's phone number changed recently: any change she asks for now waits longer.

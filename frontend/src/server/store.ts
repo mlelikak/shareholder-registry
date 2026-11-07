@@ -104,6 +104,7 @@ export function resetDemoState() {
   saveInbox([]);
   saveAgentLog([]);
   writeJson('profiles.json', {});
+  writeJson('deliveries.json', []);
 }
 
 /** Small off-chain JSON files next to the demo state (e.g. profiles). */

@@ -21,7 +21,7 @@ type InvestorView = {
   detailsOld: boolean;
   payoutMethod?: 'near' | 'intents' | 'bank';
   bankLast4?: string;
-  route?: { chain: string; asset_id: string } | null;
+  route?: { chain: string; asset_id: string; address: string } | null;
   pendingChange: Pending | null;
   helpers: string[];
   company: { name: string; totalShares: number };
@@ -409,7 +409,17 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
         </div>
       )}
 
-      {line && line.outcome === 'paid' && (
+      {line && line.outcome === 'paid' && v.payoutMethod === 'intents' && v.route && (
+        <div className="tile">
+          <h2>{euros(line.amount)} from {v.company.name} was sent to you as {payTo(v)}.</h2>
+          <p>
+            It went to your address ending {v.route.address.slice(-4)} through NEAR Intents. (Demo: the delivery to {payTo(v)} is
+            simulated; the amount is in test euros on NEAR testnet.)
+          </p>
+          <button className="btn big secondary" onClick={async () => { setScreen('check'); setReply(await post('check-payment')); }}>Check this payment</button>
+        </div>
+      )}
+      {line && line.outcome === 'paid' && v.payoutMethod !== 'intents' && (
         <div className="tile">
           <h2>{euros(line.amount)} received from {v.company.name}.</h2>
           <p>It&apos;s in your account now. (Test euros on NEAR testnet.)</p>
