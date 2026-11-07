@@ -129,7 +129,7 @@ async function main() {
   for (const p of PEOPLE) {
     const kp = keyFor(p.key);
     const accountId = keyToImplicitAddress(kp.getPublicKey());
-    if (!(await accountExists(accountId))) report(`create ${p.name}'s random account`, await send(funder, accountId, [actions.transfer(NEAR(0.1))]));
+    if (!(await accountExists(accountId))) report(`create ${p.name}'s random account`, await send(funder, accountId, [actions.transfer(NEAR(0.3))]));
     cast.push({ ...p, accountId, privateKey: kp.toString() });
   }
   stopIfFailed();
