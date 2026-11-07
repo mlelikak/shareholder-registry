@@ -47,7 +47,7 @@ export async function recycleDeployment(
       log(`FAIL  ${a.label}: ${r.error}`);
       failures++;
     }
-    await pause(300);
+    await pause(1200);
   }
   return failures;
 }
