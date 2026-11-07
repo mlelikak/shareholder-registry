@@ -91,6 +91,9 @@ export default function CompanyPage() {
   const busy = Boolean(running);
   const counts = { green: 0, amber: 0, red: 0 } as Record<string, number>;
   s.holders.forEach((h) => (counts[h.status] += 1));
+  // KYC current = a valid identity check and clear screening, as the payout gate requires.
+  const kycCurrent = s.holders.filter((h) => !h.issues.some((i) => i === 'kyc_expired' || i === 'kyc_missing' || i === 'screening_review')).length;
+  const kycPct = s.holders.length ? Math.round((kycCurrent / s.holders.length) * 100) : 0;
 
   return (
     <main>
@@ -121,6 +124,7 @@ export default function CompanyPage() {
                 <span><span className="dot" style={{ color: 'var(--green)' }} /> {counts.green} current</span>
                 <span><span className="dot" style={{ color: 'var(--amber)' }} /> {counts.amber} need a look</span>
                 <span><span className="dot" style={{ color: 'var(--red)' }} /> {counts.red} need action</span>
+                <span title="Valid identity check and clear screening (simulated KYC provider)">KYC current: {kycPct}% ({kycCurrent} of {s.holders.length})</span>
               </div>
             </div>
             <div className="readiness">

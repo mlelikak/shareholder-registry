@@ -2,8 +2,6 @@
 
 Built at NEAR HACKATHON (Nov 1–14, 2026). Tracks: `realworld`, `security`, `privacy`.
 
-> Draft written before the hackathon. Sections marked TODO are filled in once the app is built.
-
 ## What it is
 
 **An AI payment agent for exit day that keeps every shareholder verified and reachable, can't be tricked into moving money, and proves every payout matched each holder's shares, with holders known on-chain only as random accounts, never by name.**
@@ -108,45 +106,43 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 
 ## Try it
 
-TODO: replace with the deployed URL, contract account and test accounts.
+Live app (NEAR testnet): TODO. To run it yourself, see [Run locally](#run-locally).
 
-Live app (NEAR testnet): TODO
-Contract: TODO.testnet
+Everything happens on NEAR testnet with test tokens. The **Demo inbox** shows the emails and texts that would be sent, including login codes. Logins are a labelled mock: pick a person and type the code from the Demo inbox (the screen also shows it).
 
-Steps for a judge (the in-app **Demo inbox** shows the emails and text codes that would be sent):
+**First open Reset and click Reset demo** (about 2½ minutes). The demo clock is fast (details go stale after 10 minutes, a bank change waits 2–5 minutes) and the contract has no way to rewrite dates, so a reset puts a fresh copy of the contract on testnet and seeds the cast again. Run the exit payout between about **5 and 20 minutes after a reset**; the Reset page shows the window.
 
-**First click Reset demo.** The demo's short time limits (10 minutes for a confirmation) turn every holder red, so the button deploys a fresh copy of the contract on testnet and seeds the cast with new dates.
+1. Open **Company** (Acme's dashboard). → The exit payout is open and funded. Readiness: **2 of 5** ready; KYC current: 80%; the check "No share counts in dispute" is red.
+2. Click **Run the caretaker agent**. → Its report (written by the model inside the NEAR AI Cloud enclave, attestation in the **Agent log**): Tom's email bounced, Peter's identity check expired, Peter says 800 shares and Lena says 1,200 where the register shows 1,000 each. It texts Tom and pauses his payouts, emails Peter and Lena (**Demo inbox**), and proposes one correction: an unrecorded transfer of 200 shares from Peter to Lena.
+3. Open the **Investor app** as **Peter** and tap **Identify me again** (simulated). → His identity check is current.
+4. On the dashboard, click **Apply correction**. → Peter shows 800 and Lena 1,200, both unconfirmed. In the investor app, Peter and Lena each confirm their new number. → Readiness: **4 of 5**, Tom held.
+5. Open **Attacker**: **Redirect Maria's payout** (a stranger) and **Try as the company admin**. → Both refused by the contract: "only the holder can request a payout change", with explorer links.
+6. Still on Attacker, **Send the fraud email** to the agent. → The AI says "refuse"; then the agent's own key is used to try the change anyway, and the NEAR network rejects it: that key may only flag, pause, freeze and log.
+7. As **Maria (72)**, tap **Change my bank account** → **No, this is my own decision** → enter 4 digits → **Continue to my bank** (simulated) → the code. → Saved, but it takes 5 minutes instead of 2, because her phone number changed recently.
+8. Log in as **Anna**, Maria's daughter and helper. → "Maria asked to change the bank account". Tap **Cancel this change**. → Maria's payouts still go to her usual account.
+9. On the dashboard, the checks are green: click **Run exit payout**. → The contract publishes the manifest root, then pays: Peter and Erik receive test euros, Maria's bank payout is queued (simulated), Tom's share is held, and **Lena** is paid through NEAR Intents as USDC on Base (delivery simulated; a real 1Click quote is shown). Totals reconcile to the smallest unit, with a 3-unit rounding remainder kept for the company.
+10. As Maria, tap **Check this payment**. → ✓ her amount matches her shares and her line verifies against the published manifest root.
+11. As **Tom**, tap **Yes, all correct**, confirm his share count, then **Collect my money**. → His held share is paid.
 
-1. Open the **Acme Robotics** company dashboard and click **Open payout**. → Payout readiness: 2 of 5 ready, **KYC current: 80%** (4 of 5 investors). The agent's report: Tom's email bounced; Peter's KYC expired; Peter says he holds 800 shares but the register says 1,000; Lena says 1,200 but the register says 1,000.
-2. Open the **Agent log** and the **Demo inbox**. → The agent emailed Tom, then texted him, and paused his payouts.
-3. Open the app as **Peter**, re-identify (simulated). → His KYC is current.
-4. Back on the dashboard, see the agent's proposed correction: Peter's −200 and Lena's +200 are one unrecorded transfer. Click **Apply**. → Both holders go back to unconfirmed. Open the app as each and confirm. → Readiness: 4 of 5, Tom held.
-5. Open the **Attacker panel** and try to change Maria's account from another account. → Rejected: "only the holder can request a payout change" (explorer link shown).
-6. As **Maria (72)**, tap **Change my bank account** → **No, this is my own decision** → **Continue to my bank** (simulated) → enter the code from the Demo inbox (the "coached scam"). → The waiting period is extended to 5 minutes because her phone number changed recently.
-7. Switch to **Anna (helper)**. → Alert about her mum's change. Tap **Cancel this change**. → Maria's original account stays active.
-8. In the **Agent log**, click **Ask agent to redirect Maria's money**. → Rejected by NEAR: the agent's key does not allow that method (explorer link shown).
-9. On the dashboard, see the checks tick green and click **Run exit payout**. → The manifest root appears on-chain first, then paid, queued and held results per investor, with explorer links. Peter and Erik (paid in euros to their accounts in the app) see "€… received". Maria chose her bank, so she sees "€… is on its way to your bank" (bank payout queued, simulated). **Lena** chose US dollars on another network: the screen shows her calculated share in the test euro and, labelled separately, the real, tiny transfer on mainnet (links to both chains' explorers). Tom's share is held.
-10. As Maria, tap **Check this payment**. → ✓ her amount matches her shares and belongs to the published manifest.
-11. Open the app as **Tom**, tap **Yes, all correct**, confirm his share count, then **Claim**. → Tom receives his held share.
+Every investor action shows "No fee for you: the platform paid it": a relayer submits the investor's signed call as a meta transaction.
 
 **Also built, not in the video:**
 
-- **Honest bank change:** after a reset, make Maria's change as above and, as Anna, tap **That's fine**. After the wait, the new account is active. Bloom Foods uses the same details.
+- **Honest bank change:** after a reset, make Maria's change as above and, as Anna, tap **That's fine**. After the wait, the new account is active.
+- **Second company:** Maria and Peter also hold Bloom Foods shares. Their investor app lists both companies under one set of payout details: no second sign-up.
 - **Estate flow**: after a reset (wait 5 minutes for Jonas's helper role to start), open the investor app as **Jonas**, Erik's son and helper, and tap **Tell us Erik has died**. → Erik's record is frozen; on the explorer the transaction says only `freeze_holder`, and the platform paid the fee. The agent emails Jonas the next steps (Demo inbox). Open **Estate review** and click **Agent: read the documents**. → The agent reads the simulated estate documents inside the NEAR AI Cloud enclave and prepares the case; code checks that the estate account matches. Run the exit payout (Erik's share is held), then, as the human reviewer, **Approve transfer to the estate** and **Estate: collect the money**. → Erik's held money goes to the estate's account. **Lift the freeze** undoes a mistaken report; only the reviewer's key can do either.
 
 ## What is real and what is simulated
 
-| Real (on NEAR testnet) | Simulated (labelled in the app) |
+| Real (NEAR testnet unless noted) | Simulated (labelled in the app) |
 |---|---|
-| Registry contract, who-can-change-what rules, waiting periods, helper cancel, statuses | Bank account verification (a verifier service writes a mock fingerprint) |
-| Stablecoin payouts and held funds | Text messages and emails (shown in the Demo inbox) |
-| Payout events, share-count confirmations, the payout checks and the manifest root | The scale of Lena's Intents transfer: the contract and its test euro are on testnet, while delivery is a tiny amount on mainnet from the builder's wallet, so it is much smaller than her calculated share (both are shown, labelled) |
-| NEAR Intents payout to another chain (mainnet, a tiny amount) — TODO: confirm, or note fallback | |
-| Event-based alerts | Payouts to bank accounts (shown as queued) |
-| Caretaker agent's contract actions with its restricted key | Agent's emails, texts and letters (shown in the Demo inbox); estate documents |
-| Login (mock screen; each cast member has a pre-created random testnet account whose key the demo site holds) | Strong identification (a generic screen standing in for national bank-based identification) |
-| KYC payout gate and attestations | KYC provider (identity checks, sanctions and PEP screening) |
-| | Euro stablecoin: a test euro token on testnet (EURC or similar in production, where available) |
+| Registry contract: who may change what, waiting periods, helper cancel, statuses, freeze and estate transfer | Login: a mock screen with a code in the Demo inbox; each person has a random testnet account whose key the demo site holds (in production: NEAR Auth on their phone) |
+| Payout events, share-count confirmations and disputes, the payout checks, the manifest root and each investor's check | Emails and texts (shown in the Demo inbox) |
+| Payouts in a test euro token, held funds and claims, the rounding remainder | Strong identification and the KYC provider (a platform service records the result with the KYC key) |
+| Restricted keys per role; the network rejecting the agent's key | Bank account verification (a mock fingerprint) and bank payouts (shown as queued) |
+| Meta transactions: a relayer pays investors' fees | NEAR Intents delivery: the payout service releases Lena's route and reports the result on testnet, but no USDC is sent yet. Its 1Click quote is real (a mainnet dry run, nothing sent). A tiny real mainnet transfer is planned |
+| The caretaker agent's model on NEAR AI Cloud, with attestation and signed replies checked | Estate documents |
+| A second company (Bloom Foods) using the same verified details | The euro stablecoin: a test token (EURC or similar in production) |
 
 ## Security model
 
@@ -168,17 +164,33 @@ Steps for a judge (the in-app **Demo inbox** shows the emails and text codes tha
 
 TODO: diagram.
 
-- `contract/` — Rust smart contract (registry, rules, payouts)
-- `frontend/` — Next.js app from `create-near-app` (investor, helper, company, attacker and demo-inbox views)
-- `verifier/` — simulated bank verification service
-- `agent/` — caretaker agent service (LLM + restricted NEAR key)
-- `frontend/src/server/near.ts` (`relayedCall`) — meta transactions: the investor signs, the platform relayer pays the fee
-- `payout-service/` — sends Intents payouts with a restricted key (registered routes only)
-- `docs/DESIGN.md` — full design spec
+- `contract/` — Rust smart contract: registry, rules, payout events, checks, manifest root, held funds, estate transfer (`cargo test` covers it)
+- `token/` — test euro token (NEP-141) for testnet
+- `frontend/` — Next.js app: investor app, helper view, company dashboard, agent log, demo inbox, attacker panel, estate review, reset
+  - `src/server/agent/` — caretaker agent: plain code finds issues and proposals; the model on NEAR AI Cloud writes the report and messages; restricted key for contract calls
+  - `src/server/nearai.ts` — NEAR AI Cloud calls, attestation and reply-signature checks
+  - `src/server/near.ts` — NEAR calls, including `relayedCall` (meta transactions: the investor signs, the platform relayer pays)
+  - `src/server/payout-service.ts` — Intents payout service (restricted key: release a registered route, report the result)
+  - `src/server/estate.ts` — estate flow
+  - `scripts/seed.mts`, `scripts/reset.mts` — deploy and seed a demo copy; recycle the old one
+- `scripts/e2e-exit.sh` — full exit on testnet from the command line
+- `DESIGN.md` — full design spec
 
 ## Run locally
 
-TODO: website commands. Contract tests: `cargo test` in `contract/`. Full exit on testnet with real token transfers: `bash scripts/e2e-exit.sh <suffix> <funded-testnet-account>`.
+Needs Node.js 24+, Rust with `cargo-near`, a funded NEAR testnet account with its key in `~/.near-credentials/testnet/`, and a NEAR AI Cloud API key.
+
+```bash
+cp .env.example .env            # then set NEAR_AI_API_KEY
+cd contract && cargo near build non-reproducible-wasm --no-abi && cd ..
+cd token && cargo near build non-reproducible-wasm --no-abi && cd ..
+cd frontend
+npm install
+node scripts/seed.mts d1 <your-account.testnet>   # deploys a demo copy (about 10 test NEAR, returned on reset)
+npm run dev                                         # http://localhost:3000
+```
+
+Contract tests: `cargo test` in `contract/`. Full exit on testnet with real token transfers: `bash scripts/e2e-exit.sh <suffix> <funded-testnet-account>`.
 
 ## Tests
 
@@ -209,12 +221,13 @@ TODO: list of contract tests, including:
 
 ## Limitations
 
-- The contract runs on testnet. The Intents payout uses mainnet with a tiny amount from the builder's own wallet, because Intents runs on mainnet, so that transfer is scaled down from the investor's calculated share.
+- The contract runs on testnet. NEAR Intents runs only on mainnet, so in the demo the Intents delivery is simulated (with a real 1Click quote); a real transfer would be a tiny amount from the builder's wallet, scaled down from the investor's calculated share.
 - An investor who never confirms their share count is held, not paid. That is the safe default, but in a real exit it means more follow-up.
 - An open payout event can't be cancelled, and a correction can only involve holders already on the register.
 - In the demo, an open dispute blocks the whole payout. Production could hold just the disputed share and pay everyone else.
 - Payouts are processed in one transaction, suited to a demo of up to ~10 investors. Production needs batching.
-- Bank verification, KYC checks, text messages, emails and bank payouts are simulated.
+- Login, bank verification, KYC checks, text messages, emails, bank payouts and the Intents delivery are simulated.
+- The demo site holds the cast's testnet keys in place of their phones.
 
 ## Roadmap
 
