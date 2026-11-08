@@ -327,6 +327,17 @@ Contract tests: `cargo test` in `contract/`. Full exit on testnet with real toke
 
 Companies or the platforms they use pay per payout (well below what a payment agent charges), for escrow handling through a licensed partner, and per KYC'd investor per year for keeping the register verified and current. Investors use it free. An investor verified once is ready for every company that pays them.
 
+## Built with
+
+All project code was written during the hackathon, from the first commit on 2026-11-01. There is no pre-hackathon code and no own earlier library, so nothing here is baseline.
+
+- **Templates:** [`create-near-app`](https://github.com/near/create-near-app) for the website scaffold (Next.js), and `cargo near new` for the contract scaffold. The template's example auction contract was replaced by the registry contract.
+- **Contract:** [near-sdk-rs](https://github.com/near/near-sdk-rs) 5.29, near-contract-standards 5.29 (the NEP-141 test euro token), [cargo-near](https://github.com/near/cargo-near).
+- **App and platform services:** Next.js 16, React 19, TypeScript, [near-api-js](https://github.com/near/near-api-js) 7 (including meta transactions), [@noble/curves and @noble/hashes](https://github.com/paulmillr/noble-curves) (to check NEAR AI Cloud reply signatures), the Inter font.
+- **External services:** [NEAR AI Cloud](https://cloud.near.ai) (model `z-ai/glm-5.3-flash`, running in a TEE), the [NEAR Intents 1Click API](https://docs.near-intents.org/) (dry-run quotes only), the FastNEAR testnet RPC, and [NearBlocks](https://testnet.nearblocks.io) for explorer links.
+- **Tools:** [near-cli-rs](https://github.com/near/near-cli-rs).
+- **AI-written code:** the code and docs were written with [Claude Code](https://claude.com/claude-code) (Anthropic). The human builder made the product and design decisions, reviewed the work and tested it.
+
 ## License
 
 [MIT](LICENSE)
