@@ -63,10 +63,12 @@ for a in $OPS $SVC $MARIA $TOM $PETER $LENA $ERIK; do new_acct "$a" "0.2 NEAR"; 
 echo "created 10, each checked on-chain"
 
 echo "== deploy"
-near contract deploy "$TOK" use-file token/target/near/test_euro.wasm with-init-call new \
+# A local build wins; otherwise the committed copy in res/.
+wasm() { [ -f "$1/target/near/$2" ] && echo "$1/target/near/$2" || echo "$1/res/$2"; }
+near contract deploy "$TOK" use-file "$(wasm token test_euro.wasm)" with-init-call new \
   json-args "{\"owner_id\":\"$ADM\",\"total_supply\":\"$TOTAL\"}" prepaid-gas '100.0 Tgas' \
   attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send 2>&1 </dev/null | grep -q 'Transaction ID' && echo "token deployed"
-near contract deploy "$REG" use-file contract/target/near/shareholder_registry.wasm with-init-call new \
+near contract deploy "$REG" use-file "$(wasm contract shareholder_registry.wasm)" with-init-call new \
   json-args "{\"config\":{\"cooling_off_ms\":5000,\"extended_cooling_off_ms\":5000,\"recent_contact_change_ms\":600000,\"stale_after_ms\":3600000,\"verification_valid_for_ms\":600000},\"roles\":{\"verifier\":\"$OPS\",\"kyc_provider\":\"$OPS\",\"agent\":\"$OPS\",\"estate_reviewer\":\"$OPS\",\"payout_service\":\"$SVC\"}}" \
   prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-legacy-keychain send 2>&1 </dev/null | grep -q 'Transaction ID' && echo "registry deployed"
 

@@ -14,6 +14,9 @@ out/
 dist/
 build/
 *.wasm
+# Committed builds so the demo runs without Rust (README: Run locally)
+!contract/res/*.wasm
+!token/res/*.wasm
 
 # Editor and system files
 .DS_Store

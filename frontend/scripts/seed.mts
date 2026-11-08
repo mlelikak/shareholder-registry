@@ -20,8 +20,13 @@ if (!suffix || !funderId) {
 
 const NEAR = (n: number) => BigInt(Math.round(n * 1_000_000)) * 10n ** 18n;
 const ROOT = join(import.meta.dirname, '..', '..');
-const REGISTRY_WASM = join(ROOT, 'contract/target/near/shareholder_registry.wasm');
-const TOKEN_WASM = join(ROOT, 'token/target/near/test_euro.wasm');
+// A local build wins; otherwise the committed copy in res/, so no Rust is needed to run the demo.
+const wasm = (dir: string, file: string) => {
+  const built = join(ROOT, dir, 'target/near', file);
+  return existsSync(built) ? built : join(ROOT, dir, 'res', file);
+};
+const REGISTRY_WASM = wasm('contract', 'shareholder_registry.wasm');
+const TOKEN_WASM = wasm('token', 'test_euro.wasm');
 
 /** Demo clock from DESIGN.md section 4. */
 const CONFIG = {

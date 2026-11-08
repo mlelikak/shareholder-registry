@@ -13,7 +13,7 @@ From least to most setup:
 | 1. Watch the demo | A browser | [Demo video](VIDEO_LINK) (about 2½ minutes) → the whole exit day, end to end |
 | 2. Verify the run on-chain | A browser (the `near` CLI for two optional reads) | [Verify it on-chain](#verify-it-on-chain-no-setup) → every step of a full testnet run as a real transaction, including the manifest root logged before any money moved |
 | 3. Run the contract tests | Rust only | `cd contract && cargo test` → 87 tests pass: who may change what, waiting periods, holds, payout checks, the manifest proof |
-| 4. Run the whole app | Node.js 24+, Rust with `cargo-near`, a funded testnet account; a NEAR AI Cloud key is optional | [Run locally](#run-locally), then the 12 steps in [Try it](#try-it) |
+| 4. Run the whole app | Node.js 24+ and a funded testnet account; Rust and a NEAR AI Cloud key are optional | [Run locally](#run-locally), then the 12 steps in [Try it](#try-it) |
 
 Without a NEAR AI Cloud key the app still runs. The agent's on-chain actions and the network rejecting its key work the same. The enclave's attestation is still fetched and checked. Only the AI's own wording is replaced by plain templates, each run says so in the Agent log, and "Agent: read the documents" in the estate flow is unavailable.
 
@@ -270,17 +270,22 @@ Only the investor's own key can change where their money goes. The platform's ke
 
 ## Run locally
 
-Needs Node.js 24+, Rust with `cargo-near`, and a funded NEAR testnet account (about 10 test NEAR) with its key in `~/.near-credentials/testnet/`. Optional: a NEAR AI Cloud API key, so the agent's report and messages are written by the model in the enclave (generate it at [cloud.near.ai](https://cloud.near.ai); you can claim $10 of free credits by joining [NEAR Builders](https://nearbuilders.org/join)). Without it, see the note under [Check it in 10 minutes](#check-it-in-10-minutes).
+Needs Node.js 24+ and a funded NEAR testnet account (about 10 test NEAR) with its key in `~/.near-credentials/testnet/`. Optional: a NEAR AI Cloud API key, so the agent's report and messages are written by the model in the enclave (generate it at [cloud.near.ai](https://cloud.near.ai); you can claim $10 of free credits by joining [NEAR Builders](https://nearbuilders.org/join)). Without it, see the note under [Check it in 10 minutes](#check-it-in-10-minutes).
 
 ```bash
 cp .env.example .env            # optional: set NEAR_AI_API_KEY
-cd contract && cargo near build non-reproducible-wasm --no-abi && cd ..
-cd token && cargo near build non-reproducible-wasm --no-abi && cd ..
 cd frontend
 npm install
 node scripts/seed.mts d1 <your-account.testnet>   # deploys a demo copy (about 10 test NEAR, returned on reset)
 npm run dev                                         # http://localhost:3000
 ```
+
+**No Rust needed:** the built contracts are committed as `contract/res/shareholder_registry.wasm` and `token/res/test_euro.wasm`, and the seed script uses them. To build them yourself (Rust with `cargo-near`), run `cargo near build non-reproducible-wasm --no-abi` in `contract/` and in `token/`; a local build replaces the committed copy. These are non-reproducible builds (a reproducible build needs Docker), so your own build may not match them byte for byte. The committed files are the exact code running on the `d13` copy in [Verify it on-chain](#verify-it-on-chain-no-setup): their SHA-256 in base58 equals each account's on-chain `code_hash`.
+
+| File | `code_hash` on testnet |
+|---|---|
+| `contract/res/shareholder_registry.wasm` | `Cua9jPgwf6Gxfszwdi9Q13y6rgDvQQe8vBLLc7gyb29F` (`reg-d13.sr-tom-n1a.testnet`) |
+| `token/res/test_euro.wasm` | `7KHiMEJYALN14kJFpoYfVWvyhZ9qi3ypRzqSy8MYZm9V` (`teur-d13.sr-tom-n1a.testnet`) |
 
 Contract tests: `cargo test` in `contract/`. Full exit on testnet with real token transfers: `bash scripts/e2e-exit.sh <suffix> <funded-testnet-account>`.
 
