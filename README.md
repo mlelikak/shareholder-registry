@@ -106,6 +106,48 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 | NEAR AI Cloud private inference | The caretaker agent's AI runs in a verifiable enclave, so sensitive messages and documents stay private |
 | NEAR Intents (1Click API) | Pays each investor on the chain and token they choose; stretch: lets an acquirer fund a payout from any chain and token. Roadmap: Confidential Intents to keep payout amounts private |
 
+## Verify it on-chain (no setup)
+
+Every step of the exit-day demo was run on NEAR testnet on 2026-11-08 (demo copy `d13`). You can check each one in the block explorer without installing anything. Investors are random 64-character accounts; the names below are from the demo's off-chain records, not the chain.
+
+Contract: [`reg-d13.sr-tom-n1a.testnet`](https://testnet.nearblocks.io/address/reg-d13.sr-tom-n1a.testnet) · test euro token: [`teur-d13.sr-tom-n1a.testnet`](https://testnet.nearblocks.io/address/teur-d13.sr-tom-n1a.testnet)
+
+| Step | What to look for | Transaction |
+|---|---|---|
+| The agent pauses Tom (email bounced) | `pause_holder`, signed by the agent's restricted key | [HnanfrUP…](https://testnet.nearblocks.io/txns/HnanfrUPDMPikXBLArzztZ47aYxk2B6SZbqAdkF1pUPu) |
+| The agent flags Peter and Lena (share counts don't match the register) | `flag_holder` | [G2LNqsnu…](https://testnet.nearblocks.io/txns/G2LNqsnutTWKLaw9D5JxGPo7y2sLUWq5iG3eVYUbXdce), [3DwCzphq…](https://testnet.nearblocks.io/txns/3DwCzphqwoFsvXt2GDJkgS43zDuazTWXNRQQDUfKywpW) |
+| The agent logs its proposed correction (hash only) | `log_agent_action` | [5esvmFbu…](https://testnet.nearblocks.io/txns/5esvmFbuxYqJ1ZdspnFzisUvvwVdpjSGKhmUmmZXP9d2) |
+| Peter re-identifies (simulated KYC provider) | `record_kyc`, signed by the KYC provider's key | [F6Z7D8An…](https://testnet.nearblocks.io/txns/F6Z7D8AnYbBmwP8EL3yhARMiGWLLLeLqP6u5ogoPBfXo) |
+| The company applies the correction: 200 shares Peter → Lena | `resolve_dispute` | [Dr8HjWkf…](https://testnet.nearblocks.io/txns/Dr8HjWkfNZRmn8csEEg5JukmrxeeoLsAJ2Ax7vDouPjo) |
+| Peter confirms 800, Lena confirms 1,200 | `confirm_holding`, submitted by the fee relayer as a meta transaction | [6RPaKDeR…](https://testnet.nearblocks.io/txns/6RPaKDeRDiYsdWrs7jThDqNbiphijVN8tqSogDNXSpP7), [ErxZA8YD…](https://testnet.nearblocks.io/txns/ErxZA8YDfGfpKwekSFJT8CX9KYHVXNvec6WdJxUwyApA) |
+| A stranger tries to redirect Maria's payout | Fails: "only the holder can request a payout change" | [CKbux61o…](https://testnet.nearblocks.io/txns/CKbux61okFYZ634ZTE2nC6peuHWd6ETEcCtxiD58Jrqy) |
+| The company admin tries the same | Fails with the same error | [6vwXH1yr…](https://testnet.nearblocks.io/txns/6vwXH1yr2DYPqSscZAPS3CEHaEWephY8PXgaQCaM6geW) |
+| Maria requests a bank change | `request_payout_change`, relayed; her fee was paid by the platform | [8JxJTYXw…](https://testnet.nearblocks.io/txns/8JxJTYXwWyX6SgYDMft6jp6tq4ZGusQQZNJLjaMVoCbv) |
+| Anna, her helper, cancels it | `cancel_payout_change`, signed by Anna's key | [HvVgr3gP…](https://testnet.nearblocks.io/txns/HvVgr3gPqPfWkwBPLqGXr6YEKdvaPDqRPbGzmHCK9GiS) |
+| **Exit payout** | `execute_payout`: the `payout_manifest` event with root `ba0497f4…a6d6` is logged before the token transfers | [9YX8SYTb…](https://testnet.nearblocks.io/txns/9YX8SYTb3kmHsZntz2RRSKU2McUM1yA8FDGQXbVvSXBR) |
+| Lena's Intents route: release, then report SUCCESS | `release_for_route`, `report_route_result` by the payout service. Delivery to Base is simulated; the 1Click quote was a real mainnet dry run | [BiwEG9zX…](https://testnet.nearblocks.io/txns/BiwEG9zXkA5TWoToeUHZJQcBJ74W2Byq2ey3g6PoqNaM), [FNpRcBka…](https://testnet.nearblocks.io/txns/FNpRcBkaz4TGsHTXPHyL4gPf7Lnnd1osL2GQcNbVi61r) |
+| Tom comes back: confirms, then claims his held share | `confirm_details`, `confirm_holding`, `claim` | [FeuWZgka…](https://testnet.nearblocks.io/txns/FeuWZgkaUbQsRYoCR6EgKdUeEpKuRCf7wwVVLy4QV8cf), [Ctvr3uJx…](https://testnet.nearblocks.io/txns/Ctvr3uJx84XoKBBGk2AQsm5cU6ddSMBHt3bVzkoLnrTD), [E7ez7QHp…](https://testnet.nearblocks.io/txns/E7ez7QHpv3PJjEJ9KdxRpajCAJX7ytXpNKBCLqrJ1uMX) |
+| The bank partner reports Maria's bank payment sent (simulated transfer) | `report_bank_sent`; the contract marks it paid | [3qZLtpK8…](https://testnet.nearblocks.io/txns/3qZLtpK8jZNqDd8U5BeCQpVvfLCBo6embu2kn3LNmpFU) |
+
+**The agent being refused by the network has no transaction, by design.** When the agent's key tries `request_payout_change`, the RPC node refuses it with "Access key does not allow method request_payout_change" before it becomes a transaction. Check the key's limits yourself:
+
+```bash
+near account list-keys agent-d13.sr-tom-n1a.testnet network-config testnet now
+# → one function-call key, receiver reg-d13.sr-tom-n1a.testnet,
+#   methods: flag_holder, pause_holder, freeze_holder, log_agent_action
+```
+
+**The payout totals reconcile to the smallest unit.** No account is needed for this read:
+
+```bash
+near contract call-function as-read-only reg-d13.sr-tom-n1a.testnet get_payout \
+  json-args '{"event_id":"acme-exit"}' network-config testnet now
+# → event.state "executed", event.manifest_root "ba0497f4c14558d885577380d0db581069aaeeed724dd6ba426f1d9f69fca6d6",
+#   totals: paid 25000000001 + remainder 2 = funded 25000000003 (6 decimals), queued 0, held 0, in_flight 0
+```
+
+Each investor can check their own line against the root: `get_manifest_proof` returns the proof, and `verify_manifest_line` checks it (in the app: **Check this payment**).
+
 ## Try it
 
 Demo video: VIDEO_LINK (about 2½ minutes). There is no hosted copy: the demo shares one set of testnet accounts and a paid AI key, so it runs on your machine instead. See [Run locally](#run-locally); it takes a few minutes.
@@ -122,7 +164,7 @@ Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom 
 6. Still on Attacker, **Send the fraud email** to the agent. → The AI says "refuse"; then the agent's own key is used to try the change anyway, and the NEAR network rejects it: that key may only flag, pause, freeze and log.
 7. As **Maria (72)**, tap **Change my bank account** → **No, this is my own decision** → enter 4 digits → **Continue to my bank** (simulated) → the code. → Saved, but it takes 5 minutes instead of 2, because her phone number changed recently.
 8. Log in as **Anna**, Maria's daughter and helper. → "Maria asked to change the bank account". Tap **Cancel this change**. → Maria's payouts still go to her usual account.
-9. On the dashboard, the checks are green: click **Run exit payout**. → The contract publishes the manifest root, then pays: Peter and Erik receive test euros, Maria's bank payout is queued (simulated), Tom's share is held, and **Lena** is paid through NEAR Intents as USDC on Base (delivery simulated; a real 1Click quote is shown). Totals reconcile to the smallest unit, with a 3-unit rounding remainder kept for the company.
+9. On the dashboard, the checks are green: click **Run exit payout**. → The contract publishes the manifest root, then pays: Peter and Erik receive test euros, Maria's bank payout is queued (simulated), Tom's share is held, and **Lena** is paid through NEAR Intents as USDC on Base (delivery simulated; a real 1Click quote is shown). Totals reconcile to the smallest unit, with a 2-unit rounding remainder kept for the company.
 10. As Maria, tap **Check this payment**. → ✓ her amount matches her shares and her line verifies against the published manifest root.
 11. As **Tom**, tap **Yes, all correct**, confirm his share count, then **Collect my money**. → His held share is paid.
 12. On the dashboard, **Is everyone paid?** lists what is still needed per shareholder. Click **Bank partner: send bank payments (simulated)**. → Maria's bank payment is reported sent and the contract marks it paid. → **Everyone is paid**: €25,000.00 reached its shareholders, plus the rounding remainder kept for the company.
