@@ -14,7 +14,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { call, relayedCall, signerAccount, txLink, view, type CallResult } from './near.ts';
-import { chat, type ReplyProof } from './nearai.ts';
+import { chat, hasApiKey, type ReplyProof } from './nearai.ts';
 import { BANNED, numbersMatch, parseJson } from './agent/run.ts';
 import { addToInbox, appendAgentLog, loadDeployment, readJsonFile, writeJsonFile, type CastMember, type Deployment } from './store.ts';
 
@@ -151,6 +151,9 @@ export async function reportDeath(d: Deployment, helper: CastMember): Promise<{ 
 export async function prepareCase(d: Deployment = loadDeployment()) {
   const m = await subject(d);
   const docs = simulatedDocuments(d, m);
+  if (!hasApiKey()) {
+    throw new Error('Reading the estate documents needs the AI: set NEAR_AI_API_KEY in .env (see Run locally in the README). Lift the freeze and the rest of the demo work without it.');
+  }
   const reply = await chat(
     [
       {

@@ -4,6 +4,19 @@ Built at NEAR HACKATHON (Nov 1–14, 2026). Tracks: `realworld`, `security`, `pr
 
 *In ancient Greek cities, the* mnemones *kept the official property records. Mnemon keeps every shareholder's record verified and current, then pays each one exactly their share. It does the payment agent's job: the contract moves the money, and the AI agent never can.*
 
+## Check it in 10 minutes
+
+From least to most setup:
+
+| What | Needs | Do → see |
+|---|---|---|
+| 1. Watch the demo | A browser | [Demo video](VIDEO_LINK) (about 2½ minutes) → the whole exit day, end to end |
+| 2. Verify the run on-chain | A browser (the `near` CLI for two optional reads) | [Verify it on-chain](#verify-it-on-chain-no-setup) → every step of a full testnet run as a real transaction, including the manifest root logged before any money moved |
+| 3. Run the contract tests | Rust only | `cd contract && cargo test` → 87 tests pass: who may change what, waiting periods, holds, payout checks, the manifest proof |
+| 4. Run the whole app | Node.js 24+, Rust with `cargo-near`, a funded testnet account; a NEAR AI Cloud key is optional | [Run locally](#run-locally), then the 12 steps in [Try it](#try-it) |
+
+Without a NEAR AI Cloud key the app still runs. The agent's on-chain actions and the network rejecting its key work the same. The enclave's attestation is still fetched and checked. Only the AI's own wording is replaced by plain templates, each run says so in the Agent log, and "Agent: read the documents" in the estate flow is unavailable.
+
 ## What it is
 
 **An AI payment agent for exit day that keeps every shareholder verified and reachable, can't be tricked into moving money, and proves every payout matched each holder's shares, with holders known on-chain only as random accounts, never by name.**
@@ -257,10 +270,10 @@ Only the investor's own key can change where their money goes. The platform's ke
 
 ## Run locally
 
-Needs Node.js 24+, Rust with `cargo-near`, a funded NEAR testnet account with its key in `~/.near-credentials/testnet/`, and a NEAR AI Cloud API key (generate it at [cloud.near.ai](https://cloud.near.ai); you can claim $10 of free credits by joining [NEAR Builders](https://nearbuilders.org/join)).
+Needs Node.js 24+, Rust with `cargo-near`, and a funded NEAR testnet account (about 10 test NEAR) with its key in `~/.near-credentials/testnet/`. Optional: a NEAR AI Cloud API key, so the agent's report and messages are written by the model in the enclave (generate it at [cloud.near.ai](https://cloud.near.ai); you can claim $10 of free credits by joining [NEAR Builders](https://nearbuilders.org/join)). Without it, see the note under [Check it in 10 minutes](#check-it-in-10-minutes).
 
 ```bash
-cp .env.example .env            # then set NEAR_AI_API_KEY
+cp .env.example .env            # optional: set NEAR_AI_API_KEY
 cd contract && cargo near build non-reproducible-wasm --no-abi && cd ..
 cd token && cargo near build non-reproducible-wasm --no-abi && cd ..
 cd frontend

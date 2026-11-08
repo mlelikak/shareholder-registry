@@ -12,6 +12,18 @@ const BASE = 'https://cloud-api.near.ai/v1';
 /** Runs inside a TEE (`verifiable: true` in /v1/model/list). Passed NEAR's verifier on Nov 1. */
 export const MODEL = process.env.NEAR_AI_MODEL ?? 'z-ai/glm-5.3-flash';
 
+/** True when a NEAR AI Cloud key is configured. Without one the demo still runs: plain templates replace the AI's words. */
+export function hasApiKey(): boolean {
+  try {
+    apiKey();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const NO_KEY_NOTE = 'No NEAR AI Cloud key is set (NEAR_AI_API_KEY in .env), so this step used plain templates instead of the AI.';
+
 function apiKey(): string {
   if (!process.env.NEAR_AI_API_KEY) {
     // Local runs: the key lives in the repo-root .env (git-ignored).
@@ -150,7 +162,8 @@ export async function attest(): Promise<Attestation[]> {
   const nonce = randomBytes(32).toString('hex');
   const r = await fetch(
     `${BASE}/attestation/report?model=${encodeURIComponent(MODEL)}&signing_algo=ecdsa&nonce=${nonce}`,
-    { headers: { Authorization: `Bearer ${apiKey()}` } },
+    // The attestation report is public (checked Nov 8), so it works without a key.
+    hasApiKey() ? { headers: { Authorization: `Bearer ${apiKey()}` } } : {},
   );
   if (!r.ok) throw new Error(`attestation ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const report = await r.json();

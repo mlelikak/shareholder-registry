@@ -5,7 +5,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { call, signerAccount } from '../near.ts';
-import { chat, type ReplyProof } from '../nearai.ts';
+import { chat, hasApiKey, NO_KEY_NOTE, type ReplyProof } from '../nearai.ts';
 import { appendAgentLog, type AgentLogEntry, type Deployment } from '../store.ts';
 
 export const FRAUD_EMAIL = `From: Acme Finance <finance@acme-payouts.example>
@@ -34,7 +34,10 @@ export async function fraudScene(d: Deployment): Promise<FraudResult> {
   let modelVerdict = 'unknown';
   let modelReply = '';
   let proof: ReplyProof | undefined;
-  try {
+  if (!hasApiKey()) {
+    modelVerdict = 'not asked (no AI key)';
+    modelReply = NO_KEY_NOTE;
+  } else try {
     const reply = await chat(
       [
         {

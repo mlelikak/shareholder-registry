@@ -11,7 +11,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { call, signerAccount, txLink, view } from '../near.ts';
-import { attest, chat, linkProofs, MODEL, type Attestation, type ReplyProof } from '../nearai.ts';
+import { attest, chat, hasApiKey, linkProofs, MODEL, NO_KEY_NOTE, type Attestation, type ReplyProof } from '../nearai.ts';
 import {
   addToInbox,
   appendAgentLog,
@@ -194,7 +194,9 @@ export async function runAgent(d: Deployment): Promise<RunResult> {
   let report = `${readiness.ready} of ${readiness.total} ready.`;
   const explanations = new Map<string, string>();
   const written = new Map<string, { subject?: string; body: string }>();
-  try {
+  if (!hasApiKey()) {
+    entry({ kind: 'error', title: 'AI step skipped: no NEAR AI Cloud key', detail: NO_KEY_NOTE });
+  } else try {
     // The model occasionally returns something that isn't JSON; one retry fixes it.
     let reply = await chat(
       [
@@ -235,9 +237,12 @@ export async function runAgent(d: Deployment): Promise<RunResult> {
     const a = attestation.find((x) => x.keyInQuote) ?? attestation[0];
     entry({
       kind: 'attestation',
-      title: proofs.every((p) => p.attested)
-        ? `AI replies signed inside an attested Intel TDX enclave (${MODEL})`
-        : 'Could not link every AI reply to the attested enclave',
+      title:
+        proofs.length === 0
+          ? `Enclave attestation checked (${MODEL}); no AI replies this run to link to it`
+          : proofs.every((p) => p.attested)
+            ? `AI replies signed inside an attested Intel TDX enclave (${MODEL})`
+            : 'Could not link every AI reply to the attested enclave',
       detail: a
         ? `Enclave key ${a.signingAddress}. Fresh nonce ${a.nonce.slice(0, 16)}… and the key are inside the Intel TDX quote (v${a.quoteVersion}, TEE type ${a.teeType}); NVIDIA GPU evidence ${a.nvidiaEvidence ? 'present' : 'missing'}.`
         : 'No attestation returned.',
