@@ -1,4 +1,4 @@
-/* Design tokens. Light by default, dark when the system asks for it. */
+/* Design tokens. Always the light look. */
 :root {
   --bg: #f5f5f5;
   --panel: #ffffff;
@@ -26,33 +26,7 @@
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
   --font: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0a0a0a;
-    --panel: #141414;
-    --panel-2: #191919;
-    --ink: #f5f5f5;
-    --ink-2: #d4d4d4;
-    --muted: #9a9a9a;
-    --line: #262626;
-    --line-2: #1f1f1f;
-    --brand: #f5f5f5;
-    --brand-2: #8a8a8a;
-    --accent: #f5f5f5;
-    --accent-soft: #222222;
-    --accent-ink: #0a0a0a;
-    --green: #4ade80;
-    --green-bg: #0f2a1a;
-    --amber: #fbbf24;
-    --amber-bg: #2e230b;
-    --red: #f87171;
-    --red-bg: #351414;
-    --code-bg: #1c1c1c;
-    --shadow: none;
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
-  }
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -241,7 +215,6 @@ pre { background: var(--code-bg); padding: 14px; border-radius: var(--radius-sm)
 
 /* ---------- Agent ---------- */
 .agent-card { background: #0a0a0a; color: #ededed; border: 1px solid #0a0a0a; }
-@media (prefers-color-scheme: dark) { .agent-card { background: #050505; border-color: #262626; } }
 .agent-card .muted, .agent-card .small.muted { color: #9a9a9a; }
 .agent-card h2, .agent-card h3 { color: #fff; }
 .agent-card .btn.secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
