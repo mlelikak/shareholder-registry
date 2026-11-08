@@ -1,5 +1,5 @@
 // Demo API. Keys stay on the server; responses never include them.
-//   GET  /api/state | /api/inbox | /api/agent-log
+//   GET  /api/state | /api/inbox | /api/agent-log | /api/reset-status | /api/demo-status
 //   POST /api/agent-run | /api/agent-fraud | /api/apply | /api/payout | /api/bounce | /api/attack
 
 import { NextResponse } from 'next/server';
@@ -8,7 +8,7 @@ import { loadAgentLog, loadDeployment, loadInbox } from '@/server/store.ts';
 import { runAgent } from '@/server/agent/run.ts';
 import { fraudScene } from '@/server/agent/fraud.ts';
 import { applyProposal, attackerTry, runPayout, simulateBounce } from '@/server/actions.ts';
-import { errorText } from '@/server/near.ts';
+import { errorText, view } from '@/server/near.ts';
 import { resetRunning, resetStatus, startReset } from '@/server/reset.ts';
 import { sendBankPayouts } from '@/server/payout-service.ts';
 import { approveTransfer, estateCollects, estateView, prepareCase, unfreeze } from '@/server/estate.ts';
@@ -30,6 +30,23 @@ export async function GET(_req: Request, ctx: Ctx) {
     if (action === 'inbox') return NextResponse.json(loadInbox().slice().reverse());
     if (action === 'agent-log') return NextResponse.json(loadAgentLog().slice().reverse());
     if (action === 'reset-status') return NextResponse.json(resetStatus());
+    if (action === 'demo-status') {
+      // For the home page: is this copy fresh, or has someone already played exit day on it?
+      const r = resetStatus();
+      let payoutState: string | null = null;
+      let hasCopy = false;
+      if (!r.running) {
+        try {
+          const d = loadDeployment();
+          hasCopy = true;
+          const p = await view<{ event: { state: string } } | null>(d.registry, 'get_payout', { event_id: d.eventId });
+          payoutState = p?.event.state ?? null;
+        } catch {
+          // No copy yet, or the RPC is busy: the page then shows only the clock.
+        }
+      }
+      return NextResponse.json({ running: r.running, phase: r.phase ?? null, seededAt: r.seededAt ?? null, hasCopy, payoutState });
+    }
     if (action === 'estate') return NextResponse.json(await estateView());
     return fail('unknown action', 404);
   } catch (e) {

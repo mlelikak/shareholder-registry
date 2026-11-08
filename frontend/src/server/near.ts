@@ -15,7 +15,7 @@ function isTransient(message: string): boolean {
   return /rate limit|exceeded|429|nonce|timeout|ECONNRESET|fetch failed|socket|503|502|Server error/i.test(message);
 }
 
-async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 7): Promise<T> {
+async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 10): Promise<T> {
   let last: unknown;
   for (let i = 0; i < tries; i++) {
     try {
@@ -24,7 +24,8 @@ async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 7): Prom
       last = e;
       const msg = errorText(e);
       if (!isTransient(msg)) throw e;
-      await sleep(1500 * (i + 1));
+      // Up to about 100 s in total: a rate limit on the public RPC can last over a minute (Nov 8).
+      await sleep(Math.min(2000 * (i + 1), 15000));
     }
   }
   throw new Error(`${what}: gave up after retries: ${errorText(last)}`);

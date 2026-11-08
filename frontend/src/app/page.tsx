@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Icon } from '@/app/ui';
+import { DemoStatusBox } from '@/app/demo-status';
 
 const PRINCIPLES = [
   {
@@ -107,8 +108,9 @@ export default function Start() {
       <section className="hp-section">
         <div className="hp-section-head">
           <h2>The demo</h2>
-          <p className="muted">About five minutes. Start with Reset if someone has used it before you.</p>
+          <p className="muted">About five minutes on a fresh copy.</p>
         </div>
+        <DemoStatusBox />
         <ol className="hp-steps">
           {STEPS.map((s, i) => (
             <li key={s.title}>
