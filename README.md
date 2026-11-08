@@ -108,7 +108,7 @@ Errors come from the inputs (a transfer never recorded, a stale register) far mo
 
 ## Try it
 
-Live app (NEAR testnet): TODO. To run it yourself, see [Run locally](#run-locally).
+Demo video: VIDEO_LINK (about 2½ minutes). There is no hosted copy: the demo shares one set of testnet accounts and a paid AI key, so it runs on your machine instead. See [Run locally](#run-locally); it takes a few minutes.
 
 Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom right on every page) shows the emails and texts that would be sent, and each new one pops up where you are, including login codes. Logins are a labelled mock: pick a person and the demo fills in the code from the text for you.
 
