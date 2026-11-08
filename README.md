@@ -165,7 +165,39 @@ Every investor action shows "No fee for you: the platform paid it": a relayer su
 
 ## Architecture
 
-TODO: diagram.
+```mermaid
+flowchart LR
+  subgraph People
+    INV[Investor app<br/>investor signs]
+    HLP[Helper]
+    CO[Company admin]
+  end
+  subgraph Platform["Platform server (Next.js)"]
+    REL[Relayer<br/>pays fees]
+    AG[Caretaker agent<br/>flag / pause / log key]
+    PS[Payout service<br/>release / report key]
+    KYC[KYC + bank verifier<br/>simulated]
+  end
+  subgraph NEAR["NEAR testnet"]
+    REG[(Registry contract<br/>rules, waits, checks,<br/>payouts, proof)]
+    TOK[(Test euro token<br/>NEP-141)]
+  end
+  AI[NEAR AI Cloud<br/>attested enclave]
+  INT[NEAR Intents / 1Click<br/>quote real, delivery simulated]
+  BANK[Bank partner<br/>simulated]
+  INV -- signed meta transaction --> REL --> REG
+  HLP -- cancel / report --> REL
+  CO -- fund, run payout --> REG
+  KYC --> REG
+  AG -- writes report, messages --> AI
+  AG --> REG
+  REG <--> TOK
+  PS --> REG
+  PS --> INT
+  PS --> BANK
+```
+
+Only the investor's own key can change where their money goes. The platform's keys are function-call keys that NEAR limits to a few methods each, so the relayer can pay fees but not sign for anyone, and the agent can flag and pause but never move money.
 
 - `contract/` — Rust smart contract: registry, rules, payout events, checks, manifest root, held funds, estate transfer (`cargo test` covers it)
 - `token/` — test euro token (NEP-141) for testnet
@@ -197,7 +229,7 @@ Contract tests: `cargo test` in `contract/`. Full exit on testnet with real toke
 
 ## Tests
 
-TODO: list of contract tests, including:
+87 contract tests (`cargo test` in `contract/`) cover, among others:
 - a change requested by someone other than the holder is rejected
 - a helper can cancel a pending change but cannot request one
 - the waiting period is extended after a recent contact change or for a first-ever change
