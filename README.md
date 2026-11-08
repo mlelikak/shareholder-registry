@@ -257,7 +257,7 @@ Only the investor's own key can change where their money goes. The platform's ke
 
 ## Run locally
 
-Needs Node.js 24+, Rust with `cargo-near`, a funded NEAR testnet account with its key in `~/.near-credentials/testnet/`, and a NEAR AI Cloud API key.
+Needs Node.js 24+, Rust with `cargo-near`, a funded NEAR testnet account with its key in `~/.near-credentials/testnet/`, and a NEAR AI Cloud API key (generate it at [cloud.near.ai](https://cloud.near.ai); you can claim $10 of free credits by joining [NEAR Builders](https://nearbuilders.org/join), plenty for many demo runs).
 
 ```bash
 cp .env.example .env            # then set NEAR_AI_API_KEY

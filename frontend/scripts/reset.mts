@@ -34,7 +34,14 @@ if (status.phase === 'recycling' || status.phase === 'failed') {
   status.phase = 'recycling';
   save(status);
   const oldKeys = join(DEMO, `keys-${status.from}.json`);
-  if (suffixOf(deployment.registry) === status.from) {
+  // Copies listed in .demo/keep.json (e.g. ["d13"]) are never deleted: the README's
+  // "Verify it on-chain" links point at them. Their deployment record is kept beside it.
+  const keepFile = join(DEMO, 'keep.json');
+  const keep: string[] = existsSync(keepFile) ? JSON.parse(readFileSync(keepFile, 'utf8')) : [];
+  if (suffixOf(deployment.registry) === status.from && keep.includes(status.from)) {
+    writeFileSync(join(DEMO, `deployment-${status.from}.json`), JSON.stringify(deployment, null, 2));
+    console.log(`== keep ${status.from}: listed in keep.json, not recycled`);
+  } else if (suffixOf(deployment.registry) === status.from) {
     const saved: Record<string, string> = existsSync(oldKeys) ? JSON.parse(readFileSync(oldKeys, 'utf8')) : {};
     const contractKeys: Record<string, string> = {};
     if (saved.reg) contractKeys[deployment.registry] = saved.reg;
