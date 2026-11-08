@@ -1,6 +1,8 @@
-# [Project name] — simple, scam-resistant payout details for companies with many small shareholders
+# Mnemon Payment Agent — simple, scam-resistant payout details for companies with many small shareholders
 
 Built at NEAR HACKATHON (Nov 1–14, 2026). Tracks: `realworld`, `security`, `privacy`.
+
+*In ancient Greek cities, the* mnemones *kept the official property records. Mnemon keeps every shareholder's record verified and current, then pays each one exactly their share. It does the payment agent's job: the contract moves the money, and the AI agent never can.*
 
 ## What it is
 
@@ -285,4 +287,4 @@ Companies or the platforms they use pay per payout (well below what a payment ag
 
 ## License
 
-TODO
+[MIT](LICENSE)

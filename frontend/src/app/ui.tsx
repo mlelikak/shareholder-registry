@@ -75,8 +75,8 @@ export function Nav() {
         <Link href="/" className="brand">
           <BrandMark />
           <span>
-            Shareholder Registry
-            <small>Exit-day payouts</small>
+            Mnemon
+            <small>Payment agent for exit day</small>
           </span>
         </Link>
         <nav className="tabs">

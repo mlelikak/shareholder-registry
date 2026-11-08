@@ -8,7 +8,7 @@ import { InboxDock } from '@/app/inbox-dock';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Shareholder Registry',
+  title: 'Mnemon Payment Agent',
   description: 'Exit-day payouts: verified shareholders, a caretaker agent that cannot move money, and provably correct payouts.',
 };
 
