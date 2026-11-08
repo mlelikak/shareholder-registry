@@ -1,12 +1,18 @@
 // Server-side NEAR helpers shared by the seed script, the caretaker agent and
 // (later) the website's API routes. Testnet only.
 
-import { Account, JsonRpcProvider, actions, type KeyPairString } from 'near-api-js';
+import { Account, FailoverRpcProvider, JsonRpcProvider, actions, type KeyPairString } from 'near-api-js';
 
 export const RPC_URL = process.env.NEAR_RPC_URL ?? 'https://test.rpc.fastnear.com/';
 export const EXPLORER = 'https://testnet.nearblocks.io';
 
-export const provider = new JsonRpcProvider({ url: RPC_URL });
+/** Used when the first RPC refuses us: FastNEAR rate-limits a whole IP for minutes after bursts (Nov 8). */
+export const FALLBACK_RPC_URL = 'https://rpc.testnet.near.org';
+export const provider = new FailoverRpcProvider([
+  // Fail fast on the first one, so the fallback takes over instead of the page hanging.
+  new JsonRpcProvider({ url: RPC_URL }, { retries: 1, wait: 200, backoff: 1 }),
+  new JsonRpcProvider({ url: FALLBACK_RPC_URL }),
+]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -44,9 +50,8 @@ export function errorText(e: unknown): string {
 }
 
 export async function view<T>(contractId: string, method: string, args: Record<string, unknown> = {}): Promise<T> {
-  return withRetry(`view ${method}`, () =>
-    provider.callFunction({ contractId, method, args }) as Promise<T>,
-  );
+  // Reads give up sooner than transactions: a page waiting minutes looks frozen.
+  return withRetry(`view ${method}`, () => provider.callFunction({ contractId, method, args }) as Promise<T>, 4);
 }
 
 export async function accountExists(accountId: string): Promise<boolean> {

@@ -100,7 +100,36 @@ export function latestProposals(log: AgentLogEntry[]): Proposal[] {
     });
 }
 
+/**
+ * Pages poll the state every few seconds. One chain read is shared by every request that
+ * arrives while it runs, and its result is reused for a few seconds, so polling never piles
+ * up dozens of RPC calls (that pile-up got the demo rate-limited on Nov 8).
+ */
+let inFlight: { registry: string; promise: Promise<DemoState> } | null = null;
+let cached: { registry: string; at: number; state: DemoState } | null = null;
+const CACHE_MS = 4000;
+
 export async function readState(d: Deployment = loadDeployment()): Promise<DemoState> {
+  if (cached && cached.registry === d.registry && Date.now() - cached.at < CACHE_MS) return cached.state;
+  if (inFlight && inFlight.registry === d.registry) return inFlight.promise;
+  const promise = readStateNow(d)
+    .then((state) => {
+      cached = { registry: d.registry, at: Date.now(), state };
+      return state;
+    })
+    .finally(() => {
+      inFlight = null;
+    });
+  inFlight = { registry: d.registry, promise };
+  return promise;
+}
+
+/** Call after any action, so the next poll shows its effect instead of a cached copy. */
+export function forgetState() {
+  cached = null;
+}
+
+async function readStateNow(d: Deployment): Promise<DemoState> {
   const now = Date.now();
   const [config, company, payout] = await Promise.all([
     view<Config>(d.registry, 'get_config'),
@@ -108,13 +137,25 @@ export async function readState(d: Deployment = loadDeployment()): Promise<DemoS
     view<PayoutView | null>(d.registry, 'get_payout', { event_id: d.eventId }),
   ]);
   const lines = payout ? await view<ReadinessLine[]>(d.registry, 'get_readiness', { event_id: d.eventId }) : [];
+  // Holders are read in groups of four: much faster than one by one, but not a burst
+  // big enough to trip the public RPC's rate limit.
+  const reads: [(Holder & { payout_method: string }) | null, string][] = [];
+  for (let i = 0; i < lines.length; i += 4) {
+    reads.push(
+      ...(await Promise.all(
+        lines.slice(i, i + 4).map((line) =>
+          Promise.all([
+            view<(Holder & { payout_method: string }) | null>(d.registry, 'get_holder', { holder_id: line.holder_id }),
+            view<string>(d.registry, 'get_held_funds', { company_id: d.companyId, holder_id: line.holder_id }),
+          ]),
+        ),
+      )),
+    );
+  }
   const holders: HolderView[] = [];
-  for (const line of lines) {
+  for (const [i, line] of lines.entries()) {
     const member = d.cast.find((c) => c.accountId === line.holder_id);
-    const [h, held] = await Promise.all([
-      view<(Holder & { payout_method: string }) | null>(d.registry, 'get_holder', { holder_id: line.holder_id }),
-      view<string>(d.registry, 'get_held_funds', { company_id: d.companyId, holder_id: line.holder_id }),
-    ]);
+    const [h, held] = reads[i];
     holders.push({
       ...findIssues(line, h, config, now),
       key: member?.key ?? line.holder_id,

@@ -3,7 +3,7 @@
 //   POST /api/agent-run | /api/agent-fraud | /api/apply | /api/payout | /api/bounce | /api/attack
 
 import { NextResponse } from 'next/server';
-import { readState } from '@/server/state.ts';
+import { forgetState, readState } from '@/server/state.ts';
 import { loadAgentLog, loadDeployment, loadInbox } from '@/server/store.ts';
 import { runAgent } from '@/server/agent/run.ts';
 import { fraudScene } from '@/server/agent/fraud.ts';
@@ -98,6 +98,7 @@ export async function POST(req: Request, ctx: Ctx) {
   } catch (e) {
     return fail(e);
   } finally {
+    forgetState();
     busy = false;
   }
 }
