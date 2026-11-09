@@ -22,7 +22,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 function isTransient(message: string): boolean {
   // A missing account is an answer, not a server problem (the failover asks every server first).
   if (/does not exist/i.test(message)) return false;
-  return /rate limit|exceeded|429|nonce|timeout|ECONNRESET|fetch failed|socket|503|502|Server error/i.test(message);
+  // The failover wraps every error in "Exceeded N providers to execute request": that word alone
+  // says nothing, so drop it. A refusal (wrong key, contract panic, no balance) is a final answer.
+  const m = message.replace(/Exceeded \d+ providers to execute request/gi, '');
+  if (/does not allow method|AccessKey|panicked|Smart contract|NotEnoughBalance|Not enough balance|prepaid gas/i.test(m)) return false;
+  return /rate limit|exceeded|429|nonce|timeout|ECONNRESET|fetch failed|socket|503|502|Server error/i.test(m);
 }
 
 async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 10): Promise<T> {
