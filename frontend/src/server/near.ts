@@ -6,18 +6,22 @@ import { Account, FailoverRpcProvider, JsonRpcProvider, actions, type KeyPairStr
 export const RPC_URL = process.env.NEAR_RPC_URL ?? 'https://test.rpc.fastnear.com/';
 export const EXPLORER = 'https://testnet.nearblocks.io';
 
-/** Used when the first RPC refuses us: FastNEAR rate-limits a whole IP for minutes after bursts (Nov 8). */
-export const FALLBACK_RPC_URL = 'https://rpc.testnet.near.org';
+/**
+ * Used in order when the first RPC refuses us: FastNEAR rate-limits a whole IP for minutes after
+ * bursts. rpc.testnet.near.org is deprecated and refuses every call (Nov 9), so it is not used.
+ */
+export const FALLBACK_RPC_URLS = ['https://near-testnet.drpc.org', 'https://testnet-rpc.intea.rs'];
 export const provider = new FailoverRpcProvider([
-  // Fail fast on the first one, so the fallback takes over instead of the page hanging.
-  new JsonRpcProvider({ url: RPC_URL }, { retries: 1, wait: 200, backoff: 1 }),
-  new JsonRpcProvider({ url: FALLBACK_RPC_URL }),
+  // Fail fast on each one, so the next takes over instead of the page hanging.
+  ...[RPC_URL, ...FALLBACK_RPC_URLS].map((url) => new JsonRpcProvider({ url }, { retries: 1, wait: 300, backoff: 1 })),
 ]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Public RPCs reject bursts; these errors are worth retrying, others are not. */
 function isTransient(message: string): boolean {
+  // A missing account is an answer, not a server problem (the failover asks every server first).
+  if (/does not exist/i.test(message)) return false;
   return /rate limit|exceeded|429|nonce|timeout|ECONNRESET|fetch failed|socket|503|502|Server error/i.test(message);
 }
 
@@ -39,6 +43,9 @@ async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 10): Pro
 
 export function errorText(e: unknown): string {
   if (e instanceof Error) {
+    // FailoverRpcError keeps each server's own error: show them, they hold the real reason.
+    const each = (e as { errors?: unknown[] }).errors;
+    if (Array.isArray(each) && each.length) return `${e.message}: ${each.map(errorText).join(' | ')}`;
     const extra = (e as { cause?: unknown }).cause;
     return extra ? `${e.message} (${errorText(extra)})` : e.message;
   }
