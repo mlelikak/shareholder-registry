@@ -355,6 +355,7 @@ All project code was written during the hackathon, from the first commit on 2026
 - **External services:** [NEAR AI Cloud](https://cloud.near.ai) (model `z-ai/glm-5.3-flash`, running in a TEE), the [NEAR Intents 1Click API](https://docs.near-intents.org/) (dry-run quotes only), the FastNEAR testnet RPC, and [NearBlocks](https://testnet.nearblocks.io) for explorer links.
 - **Tools:** [near-cli-rs](https://github.com/near/near-cli-rs).
 - **AI-written code:** the code and docs were written with [Claude Code](https://claude.com/claude-code) (Anthropic). The human builder made the product and design decisions, reviewed the work and tested it.
+- **Demo video:** recorded by a script driving the real app on testnet ([Playwright](https://playwright.dev) and Chrome); the waits are cut out and some footage is sped up. The voice-over is AI-generated (a Microsoft Edge neural voice, via [edge-tts](https://github.com/rany2/edge-tts)), and the video was assembled with [FFmpeg](https://ffmpeg.org).
 
 ## License
 
