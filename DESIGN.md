@@ -439,4 +439,4 @@ The grand prize goes to one coherent, polished story, so depth on exit day beats
 
 **Cut order if behind:** stretch items → estate flow → second company → NEAR Auth (labelled mock login) → relayer → Merkle check (plain hash) → Intents payout (labelled simulation) → NEAR AI Cloud last.
 
-**CLAUDE.md, the plan doc and the README** must match this section; CLAUDE.md follows it, and it wins over the plan until the plan is updated.
+**The plan doc and the README** must match this section, and it wins over the plan until the plan is updated.

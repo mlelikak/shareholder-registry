@@ -27,3 +27,6 @@ Thumbs.db
 # Demo state: testnet keys for the cast, inbox, agent log
 .demo/
 *.tsbuildinfo
+
+# Builder's private working notes for Claude Code: kept locally, never published
+CLAUDE.md
