@@ -10,7 +10,7 @@ From least to most setup:
 
 | What | Needs | Do → see |
 |---|---|---|
-| 1. Watch the demo | A browser | [Demo video](VIDEO_LINK) (about 2½ minutes) → the whole exit day, end to end |
+| 1. Watch the demo | A browser | [Demo video](VIDEO_LINK) (about 2 minutes) → the whole exit day, end to end |
 | 2. Verify the run on-chain | A browser (the `near` CLI for two optional reads) | [Verify it on-chain](#verify-it-on-chain-no-setup) → every step of a full testnet run as a real transaction, including the manifest root logged before any money moved |
 | 3. Run the contract tests | Rust only | `cd contract && cargo test` → 87 tests pass: who may change what, waiting periods, holds, payout checks, the manifest proof |
 | 4. Run the whole app | Node.js 24+ and a funded testnet account; Rust and a NEAR AI Cloud key are optional | [Run locally](#run-locally), then the 12 steps in [Try it](#try-it) |
@@ -163,7 +163,7 @@ Each investor can check their own line against the root: `get_manifest_proof` re
 
 ## Try it
 
-Demo video: VIDEO_LINK (about 2½ minutes). There is no hosted copy: the demo shares one set of testnet accounts and a paid AI key, so it runs on your machine instead. See [Run locally](#run-locally); it takes a few minutes.
+Demo video: VIDEO_LINK (about 2 minutes). There is no hosted copy: the demo shares one set of testnet accounts and a paid AI key, so it runs on your machine instead. See [Run locally](#run-locally); it takes a few minutes.
 
 Everything happens on NEAR testnet with test tokens. The **Demo inbox** (bottom right on every page) shows the emails and texts that would be sent, and each new one pops up where you are, including login codes. Logins are a labelled mock: pick a person and the demo fills in the code from the text for you.
 
@@ -188,7 +188,8 @@ Every investor action shows "No fee for you: the platform paid it": a relayer su
 
 **Also built, not in the video:**
 
-- **Honest bank change:** after a reset, make Maria's change as above and, as Anna, tap **That's fine**. After the wait, the new account is active.
+- **Attacks:** steps 5 and 6 above (a stranger, the company admin, and a fraud email to the agent: all refused, the last by the NEAR network itself).
+- **Coached scam:** steps 7 and 8 above (Maria is talked into a bank change; Anna cancels it). The video shows the honest version: Anna taps **That's fine**, and after the wait the new account is active.
 - **Second company:** Maria and Peter also hold Bloom Foods shares. Their investor app lists both companies under one set of payout details: no second sign-up.
 - **Estate flow**: after a reset (wait 5 minutes for Jonas's helper role to start), open the investor app as **Jonas**, Erik's son and helper, and tap **Tell us Erik has died**. → Erik's record is frozen; on the explorer the transaction says only `freeze_holder`, and the platform paid the fee. The agent emails Jonas the next steps (Demo inbox). Open **Estate review** and click **Agent: read the documents**. → The agent reads the simulated estate documents inside the NEAR AI Cloud enclave and prepares the case; code checks that the estate account matches. Run the exit payout (Erik's share is held), then, as the human reviewer, **Approve transfer to the estate** and **Estate: collect the money**. → Erik's held money goes to the estate's account. **Lift the freeze** undoes a mistaken report; only the reviewer's key can do either.
 
