@@ -351,19 +351,19 @@ The advanced option shows chains and tokens in plain words ("US dollars (USDC) o
 - **Demo inbox:** shows the emails and text codes that would be sent, so judges can follow without real SMS.
 - **Reset demo:** the demo's short time limits turn every seeded holder red within minutes, so a judge arriving days later would see all money held. This button deploys a fresh copy of the contract on testnet and seeds the cast with new dates, including Maria's recent phone change. It gives the live contract no special powers: there is no admin method for rewriting dates.
 
-## 11. Demo script (target: about 2½ minutes)
+## 11. Demo script (the video: about 2 minutes)
 
-Built around exit day, the hardest moment for a company with many small investors. Everything else is "also built" and shown in the README.
+Built around exit day, the hardest moment for a company with many small investors, and around everyday smoothness: investors update details easily, confirm payments, and tricky cases are handled without phone calls. Security gets one short beat, not attack scenes (decided Nov 9). Everything else is "also built" and shown in the README.
 
-1. **Hook (10 s):** "When a company with hundreds of small investors is sold, someone has to pay every one of them, and today that means a payment agent and a lot of phone calls. This agent does that job."
-2. **Exit announced:** Acme opens a payout event. Readiness: 2 of 5 ready. The agent's report: Tom's email bounced; Peter's KYC expired; Peter says he holds 800 shares but the register says 1,000; Lena says 1,200 but the register says 1,000.
-3. **The agent works the list:** Tom gets an email, then a text (Demo inbox), and is paused. Peter re-identifies. The agent spots that Peter's −200 and Lena's +200 are one transfer that was never recorded and proposes the correction; the admin applies it; both confirm. Readiness: 4 of 5, Tom held.
-4. **Attacks (30 s):** a "bank employee" coaches Maria into changing her account; her phone number changed recently (spoken as "last week"; 10 minutes on the demo clock), so the wait is extended, and Anna, her helper, cancels it. A fraud email tells the agent to redirect Maria's payout; it tries and **the network rejects its key**.
-5. **The exit:** the checks tick green; one click. The manifest root appears on-chain first. Peter and Erik get euros in the app; Maria's bank payout is queued (simulated); **Lena receives USDC on another chain through NEAR Intents** (the screen shows her calculated share and, labelled separately, "real transfer on mainnet, scaled down to a tiny amount", with explorer links); Tom's share is held. Maria sees "on its way to your bank", taps "Check this payment" ✓.
-6. **Tom comes back,** answers the text, confirms his details and share count, and claims.
-7. **Close:** no callbacks, no payment agent, every payout provably right, and an AI that does the work but can't touch the money.
+1. **Hook (title card):** "When a company with hundreds of small investors is sold, someone has to pay every one of them. So it hires a payment agent, and still does the hard work itself: calling investors back, explaining the agent's portal, tracking down shareholders who moved or went silent, and hoping no hacker redirects a payout. Mnemon does that work."
+2. **The agent works the list:** Acme is being sold; 4 of 7 shareholders are ready. The caretaker agent, its AI in an attested NEAR AI Cloud enclave, texts Tom (his email bounced); Peter renews his expired identity check in two taps; the agent spots that Peter's −200 and Lena's +200 are one share sale the register never recorded; the admin applies the fix and both confirm with one tap.
+3. **The agent can't move money:** the Agent log's "What the agent can do": its NEAR key can only flag, pause, freeze and log, and the network rejects anything else.
+4. **Updating details is easy:** Maria (72) changes her bank account in a few large taps; her daughter Anna is told and taps "That's fine". Until the change takes effect, payments go to her current account.
+5. **Exit day:** one click; the contract publishes the manifest root before any money moves; everyone ready is paid, Lena in USDC on another chain through NEAR Intents (delivery simulated, with a real 1Click quote); Tom's share is held. Maria taps "Check this payment" ✓.
+6. **Tom comes back,** confirms his details and share count, and collects his money.
+7. **Close:** "Everyone is paid. Nobody was phoned, and every amount matched its shares." No phone calls, no payment agent, and an AI that does the work but can't touch the money.
 
-**Also built (README, not in the video):** Maria's honest bank change with the helper's "That's fine"; the second company (Bloom Foods) using the same verified details; the estate flow (should-have; Erik is paid in the main script, so this walkthrough starts from a demo reset, with Erik frozen before the exit).
+**Also built (README, not in the video):** the attacks (a stranger, the company admin, and a fraud email to the agent, all refused, the last by the NEAR network itself); the coached scam (Maria is talked into a bank change, the wait is extended because her contact details changed recently, and Anna cancels it); the second company (Bloom Foods) using the same verified details; the estate flow (on a fresh reset, before the payout, since Erik is paid in the main script).
 
 ## 12. Security model in brief
 
