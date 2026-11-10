@@ -45,7 +45,7 @@ export async function GET(_req: Request, ctx: Ctx) {
           // No copy yet, or the RPC is busy: the page then shows only the clock.
         }
       }
-      return NextResponse.json({ running: r.running, phase: r.phase ?? null, seededAt: r.seededAt ?? null, hasCopy, payoutState });
+      return NextResponse.json({ running: r.running, phase: r.phase ?? null, seededAt: r.seededAt ?? null, settlesAt: r.settlesAt ?? null, hasCopy, payoutState });
     }
     if (action === 'estate') return NextResponse.json(await estateView());
     return fail('unknown action', 404);

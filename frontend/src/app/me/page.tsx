@@ -257,7 +257,7 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
       )}
       {effective?.extended && (
         <p className="notice warn">
-          For your safety this takes longer than usual, because your contact details changed recently. (Demo clock: 5 minutes. In real
+          For your safety this takes longer than usual, because your contact details changed recently. (Demo clock: 3 minutes. In real
           life: 14 days.)
         </p>
       )}

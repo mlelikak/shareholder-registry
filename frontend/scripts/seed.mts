@@ -28,13 +28,17 @@ const wasm = (dir: string, file: string) => {
 const REGISTRY_WASM = wasm('contract', 'shareholder_registry.wasm');
 const TOKEN_WASM = wasm('token', 'test_euro.wasm');
 
-/** Demo clock from DESIGN.md section 4. */
+/**
+ * Demo clock (DESIGN.md section 4). The waits are short, and the cast's set-up changes are
+ * requested early so their wait runs out while the rest of the reset works (Nov 10). Nothing
+ * goes stale for an hour, so a demo can be clicked through at any pace after a reset.
+ */
 const CONFIG = {
   cooling_off_ms: 2 * 60_000,
-  extended_cooling_off_ms: 5 * 60_000,
-  recent_contact_change_ms: 10 * 60_000,
-  stale_after_ms: 10 * 60_000,
-  verification_valid_for_ms: 10 * 60_000,
+  extended_cooling_off_ms: 3 * 60_000,
+  recent_contact_change_ms: 60 * 60_000,
+  stale_after_ms: 60 * 60_000,
+  verification_valid_for_ms: 60 * 60_000,
 };
 /** Shares in Acme: two VC funds and five individual investors. */
 const SHARES_OF: Record<string, number> = { larkspur: 12_000, quarry: 8_000 };
@@ -195,22 +199,12 @@ async function main() {
   );
   stopIfFailed();
 
-  console.log('== token registration');
-  for (const id of [registry.accountId, payoutService.accountId, estate.accountId, ...cast.filter((c) => !c.helperOf).map((c) => c.accountId)]) {
-    report(`token account for ${id.slice(0, 16)}`, await call(funder, token.accountId, 'storage_deposit', { account_id: id }, { depositYocto: NEAR(0.0025) }));
-    await pause(250);
-  }
-  stopIfFailed();
-
   console.log('== holders');
   const now = Date.now();
   const year = 365 * 24 * 3600_000;
   for (const c of cast.filter((c) => !c.helperOf)) {
     report(`${c.name} registers`, await call(as(c), registry.accountId, 'register_holder', {}));
     report(`${c.name} confirms details`, await call(as(c), registry.accountId, 'confirm_details', {}));
-    // Peter's KYC ran out yesterday; everyone else is valid for a year.
-    const validUntil = c.key === 'peter' ? now - 24 * 3600_000 : now + year;
-    report(`${c.name} KYC recorded`, await call(as(kyc), registry.accountId, 'record_kyc', { holder_id: c.accountId, valid_until: validUntil, screening: 'clear' }));
   }
   stopIfFailed();
 
@@ -233,6 +227,25 @@ async function main() {
   // Maria's phone number changed recently: any change she asks for now waits longer.
   report("Maria's phone change recorded", await call(as(maria), registry.accountId, 'record_contact_change', {}));
   stopIfFailed();
+  // These set-up changes take effect after the extended wait (registration counts as a recent
+  // contact change). The steps below run meanwhile; reset.mts waits out whatever is left.
+  const settlesAt = Date.now() + CONFIG.extended_cooling_off_ms + 20_000;
+
+  console.log('== KYC');
+  for (const c of cast.filter((c) => !c.helperOf)) {
+    // Peter's KYC ran out yesterday; everyone else is valid for a year.
+    const validUntil = c.key === 'peter' ? now - 24 * 3600_000 : now + year;
+    report(`${c.name} KYC recorded`, await call(as(kyc), registry.accountId, 'record_kyc', { holder_id: c.accountId, valid_until: validUntil, screening: 'clear' }));
+  }
+  stopIfFailed();
+
+  console.log('== token registration');
+  for (const id of [registry.accountId, payoutService.accountId, estate.accountId, ...cast.filter((c) => !c.helperOf).map((c) => c.accountId)]) {
+    report(`token account for ${id.slice(0, 16)}`, await call(funder, token.accountId, 'storage_deposit', { account_id: id }, { depositYocto: NEAR(0.0025) }));
+    await pause(250);
+  }
+  stopIfFailed();
+
 
   console.log('== company and exit');
   const adm = as(admin);
@@ -272,6 +285,7 @@ async function main() {
 
   const deployment: Deployment = {
     createdAt: new Date().toISOString(),
+    settlesAt: new Date(settlesAt).toISOString(),
     funder: funderId,
     registry: registry.accountId,
     token: token.accountId,

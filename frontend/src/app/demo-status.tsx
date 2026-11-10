@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { Icon, Spinner, useAction, usePoll } from '@/app/ui';
 
-type DemoStatus = { running: boolean; phase: string | null; seededAt: string | null; hasCopy: boolean; payoutState: string | null };
+type DemoStatus = { running: boolean; phase: string | null; seededAt: string | null; settlesAt: string | null; hasCopy: boolean; payoutState: string | null };
 
 /**
  * Tells a visitor, before step 1, whether this demo copy is fresh or needs a reset.
- * Demo clock (DESIGN.md section 4): set-up settles at 5 minutes, details go stale at 20.
+ * Demo clock (DESIGN.md section 4): a reset ends when set-up has settled; details need a look after an hour.
  */
 export function DemoStatusBox() {
   const status = usePoll<DemoStatus>('/api/demo-status', 15000);
@@ -24,13 +24,13 @@ export function DemoStatusBox() {
       className="btn lg"
       disabled={action.running !== null}
       onClick={() => {
-        if (!confirm('Reset the demo? It sets up a fresh copy on testnet and takes about 2½ minutes.')) return;
+        if (!confirm('Reset the demo? It sets up a fresh copy on testnet and takes about 5 minutes.')) return;
         action.run('Reset', 'reset').then(() => {
           window.location.href = '/reset';
         });
       }}
     >
-      {action.running ? <Spinner /> : <Icon name="sparkle" />} Reset demo (about 2½ minutes)
+      {action.running ? <Spinner /> : <Icon name="sparkle" />} Reset demo (about 5 minutes)
     </button>
   );
 
@@ -40,7 +40,7 @@ export function DemoStatusBox() {
   let needsReset = true;
   if (s.running) {
     title = 'A reset is running.';
-    detail = 'A fresh copy is being set up on testnet. It takes about 2½ minutes.';
+    detail = 'A fresh copy is being set up on testnet. It takes about 5 minutes; after that, no more waiting.';
     needsReset = false;
   } else if (!s.hasCopy) {
     title = 'No demo copy yet.';
@@ -48,17 +48,18 @@ export function DemoStatusBox() {
   } else if (s.payoutState === 'executed') {
     title = 'Exit day has already been played on this copy: the payout has run.';
     detail = 'Reset to start again from the beginning. The Company page still shows the finished result.';
-  } else if (age > 20 * 60_000) {
-    title = 'This copy is more than 20 minutes old.';
+  } else if (age > 60 * 60_000) {
+    title = 'This copy is more than an hour old.';
     detail = 'On the fast demo clock the shareholders’ details are now out of date, so the payout would hold most of them. Reset first.';
   } else {
     tone = 'ok';
     needsReset = false;
-    title = age < 5 * 60_000 ? 'Fresh copy: start with step 1.' : 'Ready: start with step 1.';
-    detail =
-      age < 5 * 60_000
-        ? `Set up at ${at(0)}. Maria’s bank change and the exit payout work from ${at(5)}; run the payout before about ${at(20)}.`
-        : `Set up at ${at(0)}. Run the exit payout before about ${at(20)}.`;
+    const ready = s.settlesAt ? new Date(s.settlesAt).getTime() : t0 + 5 * 60_000;
+    const settling = Date.now() < ready;
+    title = settling ? 'Fresh copy, still settling.' : 'Ready: start with step 1.';
+    detail = settling
+      ? `Set up at ${at(0)}. Maria’s bank change and the exit payout work from ${new Date(ready).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+      : `Set up at ${at(0)}. Click through at your own pace (until about ${at(60)}).`;
   }
 
   return (

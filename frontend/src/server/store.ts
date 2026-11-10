@@ -19,6 +19,8 @@ export type CastMember = KeyedAccount & {
 
 export type Deployment = {
   createdAt: string;
+  /** When the cast's set-up changes take effect; the reset waits until then (Nov 10). */
+  settlesAt?: string;
   funder: string;
   registry: string;
   token: string;

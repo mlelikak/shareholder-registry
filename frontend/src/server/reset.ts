@@ -13,13 +13,15 @@ const STATUS = join(DIR, 'reset.json');
 
 export type ResetStatus = {
   running: boolean;
-  phase?: 'recycling' | 'seeding' | 'done' | 'failed';
+  phase?: 'recycling' | 'seeding' | 'settling' | 'done' | 'failed';
   from?: string;
   to?: string;
   startedAt?: string;
   endedAt?: string;
   /** When the current demo copy was seeded; the demo window is measured from here. */
   seededAt?: string;
+  /** When the cast's set-up changes take effect (copies seeded from Nov 10 on). */
+  settlesAt?: string;
   log: string[];
 };
 
@@ -43,10 +45,10 @@ export function resetStatus(): ResetStatus {
   const running = resetRunning();
   const log = existsSync(LOG) ? readFileSync(LOG, 'utf8').split(/\r?\n/).filter(Boolean).slice(-14) : [];
   // A reset that was killed mid-way still says "seeding"; show it as stopped.
-  const phase = !running && (s.phase === 'recycling' || s.phase === 'seeding') ? 'failed' : s.phase;
+  const phase = !running && (s.phase === 'recycling' || s.phase === 'seeding' || s.phase === 'settling') ? 'failed' : s.phase;
   const deployment = join(DIR, 'deployment.json');
-  const seededAt = existsSync(deployment) ? (JSON.parse(readFileSync(deployment, 'utf8')) as { createdAt?: string }).createdAt : undefined;
-  return { ...s, phase, running, log, seededAt };
+  const d = existsSync(deployment) ? (JSON.parse(readFileSync(deployment, 'utf8')) as { createdAt?: string; settlesAt?: string }) : undefined;
+  return { ...s, phase, running, log, seededAt: d?.createdAt, settlesAt: d?.settlesAt };
 }
 
 export function startReset(): { ok: boolean; message: string } {

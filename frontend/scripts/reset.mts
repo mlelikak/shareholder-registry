@@ -14,7 +14,7 @@ import type { Deployment } from '../src/server/store.ts';
 const DEMO = join(import.meta.dirname, '..', '.demo');
 const STATUS = join(DEMO, 'reset.json');
 
-type Status = { from: string; to: string; funder: string; phase: 'recycling' | 'seeding' | 'done' | 'failed'; startedAt: string; endedAt?: string };
+type Status = { from: string; to: string; funder: string; phase: 'recycling' | 'seeding' | 'settling' | 'done' | 'failed'; startedAt: string; endedAt?: string };
 const save = (s: Status) => writeFileSync(STATUS, JSON.stringify(s, null, 2));
 
 const deployment = JSON.parse(readFileSync(join(DEMO, 'deployment.json'), 'utf8')) as Deployment;
@@ -54,13 +54,26 @@ if (status.phase === 'recycling' || status.phase === 'failed') {
   save(status);
 }
 
-console.log(`== seed ${status.to}`);
-const r = spawnSync(process.execPath, [join(import.meta.dirname, 'seed.mts'), status.to, status.funder], { stdio: 'inherit' });
-if (r.status !== 0) {
-  status.phase = 'failed';
+if (status.phase !== 'settling') {
+  console.log(`== seed ${status.to}`);
+  const r = spawnSync(process.execPath, [join(import.meta.dirname, 'seed.mts'), status.to, status.funder], { stdio: 'inherit' });
+  if (r.status !== 0) {
+    status.phase = 'failed';
+    save(status);
+    console.error('\nReset stopped. Run it again to continue.');
+    process.exit(1);
+  }
+  status.phase = 'settling';
   save(status);
-  console.error('\nReset stopped. Run it again to continue.');
-  process.exit(1);
+}
+
+// The cast's set-up changes (Maria's bank, Lena's route, the helpers) must be active before the
+// demo starts, or Maria's bank change is blocked. Seeding hides most of that wait; finish it here.
+const seeded = JSON.parse(readFileSync(join(DEMO, 'deployment.json'), 'utf8')) as Deployment;
+const left = seeded.settlesAt ? new Date(seeded.settlesAt).getTime() - Date.now() : 0;
+if (left > 0) {
+  console.log(`== waiting ${Math.ceil(left / 1000)} s for the cast's set-up changes to take effect`);
+  await new Promise((r) => setTimeout(r, left));
 }
 status.phase = 'done';
 status.endedAt = new Date().toISOString();
