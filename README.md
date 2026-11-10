@@ -2,7 +2,7 @@
 
 Built at NEAR HACKATHON (Nov 1–14, 2026). Tracks: `realworld`, `security`, `privacy`.
 
-*In ancient Greek cities, the* mnemones *kept the official property records. Mnemon keeps every shareholder's record verified and current, then pays each one exactly their share. It does the payment agent's job: the contract moves the money, and the AI agent never can.*
+*In ancient Greek cities, the* mnemones *kept the official property records. Mnemon keeps the record of every shareholder in a company verified and current, then pays each one exactly their share. It does the payment agent's job: the contract moves the money, and the AI agent never can.*
 
 ## Check it in 10 minutes
 
@@ -19,7 +19,7 @@ Without a NEAR AI Cloud key the app still runs. The agent's on-chain actions and
 
 ## What it is
 
-**An AI payment agent for exit day that keeps every shareholder verified and reachable, can't be tricked into moving money, and proves every payout matched each holder's shares, with holders known on-chain only as random accounts, never by name.**
+**An AI payment agent for a company's exit day that keeps every shareholder verified and reachable, can't be tricked into moving money, and proves every payout matched each holder's shares, with holders known on-chain only as random accounts, never by name.**
 
 A shareholder registry on NEAR where each investor's payout details are verified, kept current, and changeable only by the investor. It is designed for older, non-technical investors: a few large, plain-language screens, login with email or a text code, and no crypto terms. Companies use it to pay many small shareholders (for example, crowdfunding investors at an exit) without phone callbacks, without chasing bank details, and without losing track of investors.
 
