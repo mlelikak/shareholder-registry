@@ -564,6 +564,12 @@ export default function Me() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+  // After an action, read again a little later too: a public RPC server can answer from a block
+  // just before the transaction, so the first read may still show the old screen (seen Nov 9).
+  const refreshAfterAction = useCallback(async () => {
+    await refresh();
+    for (const ms of [2000, 5000]) setTimeout(() => { refresh().catch(() => {}); }, ms);
+  }, [refresh]);
   return (
     <main>
       <div className="phone-stage">
@@ -581,9 +587,9 @@ export default function Me() {
             ) : !view.loggedIn ? (
               <Login onDone={refresh} />
             ) : view.role === 'helper' ? (
-              <Helper v={view} refresh={refresh} />
+              <Helper v={view} refresh={refreshAfterAction} />
             ) : (
-              <Investor v={view} refresh={refresh} />
+              <Investor v={view} refresh={refreshAfterAction} />
             )}
           </div>
           <CallUs />

@@ -105,27 +105,31 @@ export function latestProposals(log: AgentLogEntry[]): Proposal[] {
  * arrives while it runs, and its result is reused for a few seconds, so polling never piles
  * up dozens of RPC calls (that pile-up got the demo rate-limited on Nov 8).
  */
-let inFlight: { registry: string; promise: Promise<DemoState> } | null = null;
+let inFlight: { registry: string; gen: number; promise: Promise<DemoState> } | null = null;
 let cached: { registry: string; at: number; state: DemoState } | null = null;
 const CACHE_MS = 4000;
+/** Bumped by every action: a read that started before it may miss it, so it is not reused or cached. */
+let generation = 0;
 
 export async function readState(d: Deployment = loadDeployment()): Promise<DemoState> {
   if (cached && cached.registry === d.registry && Date.now() - cached.at < CACHE_MS) return cached.state;
-  if (inFlight && inFlight.registry === d.registry) return inFlight.promise;
+  if (inFlight && inFlight.registry === d.registry && inFlight.gen === generation) return inFlight.promise;
+  const gen = generation;
   const promise = readStateNow(d)
     .then((state) => {
-      cached = { registry: d.registry, at: Date.now(), state };
+      if (gen === generation) cached = { registry: d.registry, at: Date.now(), state };
       return state;
     })
     .finally(() => {
-      inFlight = null;
+      if (inFlight?.promise === promise) inFlight = null;
     });
-  inFlight = { registry: d.registry, promise };
+  inFlight = { registry: d.registry, gen, promise };
   return promise;
 }
 
 /** Call after any action, so the next poll shows its effect instead of a cached copy. */
 export function forgetState() {
+  generation++;
   cached = null;
 }
 

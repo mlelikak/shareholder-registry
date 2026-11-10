@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { act, checkLoginCode, investorView, people, sendLoginCode } from '@/server/investor.ts';
 import { errorText } from '@/server/near.ts';
 import { resetRunning } from '@/server/reset.ts';
+import { forgetState } from '@/server/state.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,7 @@ export async function POST(req: Request, ctx: Ctx) {
       return NextResponse.json(await act(key, op, body));
     } finally {
       busy = false;
+      forgetState(); // the Company page shows the investor's step on its next poll
     }
   } catch (e) {
     return NextResponse.json({ ok: false, message: 'Something went wrong', error: errorText(e) }, { status: 500 });
