@@ -328,7 +328,7 @@ Contract tests: `cargo test` in `contract/`. Full exit on testnet with real toke
 
 ## Roadmap
 
-1. Strong identification with national bank-based identification through a certified broker, for onboarding and for approving changes; EU Digital Identity Wallets for investors abroad when available.
+1. Bank-based strong identification through a certified provider, for onboarding and for approving changes; EU Digital Identity Wallets for investors abroad when available.
 2. KYC through a licensed partner: identity with strong identification, sanctions and PEP screening, tax residency, continuous re-screening; reused across companies with consent.
 3. Real bank verification (open banking or bank-website proofs processed in a TEE; only a fingerprint stored).
 4. Euro payouts to bank accounts through a licensed payment partner, so the platform itself never holds company or investor funds.

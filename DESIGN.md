@@ -267,7 +267,7 @@ In the demo this uses a fictional shareholder (not Maria) and simulated document
 
 | Piece | Demo version | Real version (roadmap) |
 |---|---|---|
-| Strong identification | A generic "strong identification" screen (no real bank names or logos) | national bank-based identification through a certified broker, at onboarding and for approving every change |
+| Strong identification | A generic "strong identification" screen (no real bank names or logos) | bank-based strong identification through a certified provider, at onboarding and for approving every change |
 | Login and signing | Labelled mock login with email / text code (see Login fallback below) | NEAR Auth with Face ID / fingerprint and recovery; the NEAR key signs the change that strong identification approved |
 | Network fees | Relayer sponsoring meta transactions (or the platform's account as fallback) | Relayer sponsoring meta transactions |
 | Caretaker agent | Small service using NEAR AI Cloud private inference (must-have; a standard LLM API only with Mike's approval); messages go to the Demo inbox | Always-on agent in an enclave (e.g. IronClaw on NEAR AI Cloud) so its key can't be taken from the host; real email/SMS/letters; local languages |
@@ -414,7 +414,7 @@ All three tracks feed the grand prize, which rewards one coherent story: an agen
 
 ## 15. Production context
 
-- **Identification:** production uses trusted national identification rather than competing with it: it proves *who* the person is; the contract decides *what is allowed* and *when it takes effect*.
+- **Identification:** production uses existing trusted identification rather than competing with it: it proves *who* the person is; the contract decides *what is allowed* and *when it takes effect*.
 - **Who it's for:** companies outside a central securities depository keep their own shareholder register. Joining one is a high hurdle for a company with hundreds of small investors. Positioning: book-entry convenience for companies too small for book-entry.
 - **Money, today and tomorrow:** today most investors expect euros in their bank account, so bank payouts through a licensed partner stay available. The product is built for a stablecoin-first future: euro stablecoins regulated under MiCA as the default, NEAR Intents for any chain or token, and bank transfers as a bridge that matters less over time. Converting or transferring crypto for others may require a crypto-asset service licence (MiCA), so production runs through licensed partners.
 - **KYC:** done by a licensed partner using strong identification; kept current and reused across companies with the investor's consent. The EU's new single AML regulation applies from July 2027, which favours compliance built in.
