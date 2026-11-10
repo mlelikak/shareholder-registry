@@ -49,7 +49,12 @@ export function errorText(e: unknown): string {
   if (e instanceof Error) {
     // FailoverRpcError keeps each server's own error: show them, they hold the real reason.
     const each = (e as { errors?: unknown[] }).errors;
-    if (Array.isArray(each) && each.length) return `${e.message}: ${each.map(errorText).join(' | ')}`;
+    if (Array.isArray(each) && each.length) {
+      // Each server usually gives the same answer (a refusal is a refusal): show it once,
+      // without the wrapper's "Exceeded 3 providers…", which reads like a crash.
+      const distinct = [...new Set(each.map(errorText))];
+      return distinct.length === 1 ? distinct[0] : distinct.join(' | ');
+    }
     const extra = (e as { cause?: unknown }).cause;
     return extra ? `${e.message} (${errorText(extra)})` : e.message;
   }

@@ -93,6 +93,7 @@ function EveryonePaid({ s, busy, running, onBank }: { s: DemoState; busy: boolea
       <div className="card-head">
         <div className="card-icon">{all ? <Icon name="check" /> : <Icon name="euro" />}</div>
         <div>
+          <div className="eyebrow">Is everyone paid?</div>
           <h2>{all ? 'Everyone is paid' : `${paid} of ${rows.length} shareholders paid`}</h2>
           <div className="small muted">
             {all

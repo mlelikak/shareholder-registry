@@ -154,9 +154,10 @@ async function checkSignature(chatId: string, requestBody: string, responseBody:
 
 /**
  * Fetches the model's attestation with a fresh random nonce and checks that the
- * Intel TDX quote binds the enclave's signing key and our nonce. The quote's
- * certificate chain and the NVIDIA evidence are checked with NEAR's open-source
- * verifier (README); this check ties each reply to the attested hardware.
+ * Intel TDX quote binds the enclave's signing key and our nonce; this check ties each
+ * reply to the attested hardware. The quote's certificate chain and the NVIDIA evidence
+ * are not re-checked here: they passed NEAR's open-source verifier
+ * (github.com/nearai/nearai-cloud-verifier) on Nov 1, and anyone can run it again.
  */
 export async function attest(): Promise<Attestation[]> {
   const nonce = randomBytes(32).toString('hex');

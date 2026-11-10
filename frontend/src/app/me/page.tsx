@@ -265,7 +265,12 @@ function ChangeBank({ v, onExit }: { v: InvestorView; onExit: () => void }) {
         {v.helpers.length ? `We've told ${v.helpers.join(' and ')} (your helper). ` : ''}If you didn&apos;t ask for this, tap Cancel or call
         us.
       </p>
-      {reply?.explorer && <p className="small"><a href={reply.explorer} target="_blank" rel="noreferrer">Recorded on NEAR testnet ↗</a></p>}
+      {reply?.explorer && (
+        <p className="small">
+          <a href={reply.explorer} target="_blank" rel="noreferrer">Recorded on NEAR testnet ↗</a>
+          {reply.feePaidByPlatform && <span className="muted"> · No fee for you: the platform paid it.</span>}
+        </p>
+      )}
       <div className="stack noprint">
         <button className="btn big secondary" onClick={() => window.print()}>Print this confirmation</button>
         <button className="btn big" onClick={onExit}>Back to my page</button>
@@ -358,14 +363,18 @@ function Investor({ v, refresh }: { v: InvestorView; refresh: () => Promise<void
   const needsDetails = v.contactBounced || v.detailsOld || v.state === 'paused';
   const heldAmount = BigInt(v.held || '0');
   const line = ev?.line;
+  const needsCount = Boolean(ev && ev.confirmation === 'unconfirmed' && (open || heldAmount > 0n));
+  const moneyWaiting = heldAmount > 0n && Boolean(line);
+  // Everything this screen asks of the investor; the summary must not say "nothing to do" while any is open.
+  const todo = [needsDetails, v.kycExpired, needsCount, moneyWaiting].filter(Boolean).length;
 
   return (
     <>
       <h1>Hello {greet(v.name)}.</h1>
-      {v.status === 'green' && !needsDetails && !v.kycExpired ? (
+      {v.status === 'green' && todo === 0 ? (
         <div className="status-hero good-bg"><span className="good"><Icon name="check" /></span><div><strong>Your details are up to date.</strong><div className="small">Nothing to do right now.</div></div></div>
       ) : (
-        <div className="status-hero todo-bg"><span style={{ color: 'var(--amber)' }}><Icon name="alert" /></span><div><strong>{[needsDetails, v.kycExpired, ev?.confirmation === 'unconfirmed' && (open || heldAmount > 0n)].filter(Boolean).length > 1 ? 'A few things need you' : 'One thing needs you'}</strong><div className="small">It only takes a moment. See below.</div></div></div>
+        <div className="status-hero todo-bg"><span style={{ color: 'var(--amber)' }}><Icon name="alert" /></span><div><strong>{todo > 1 ? 'A few things need you' : todo === 1 ? 'One thing needs you' : 'Please take a look'}</strong><div className="small">It only takes a moment. See below.</div></div></div>
       )}
       <div className="tile" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <Icon name={v.payoutMethod === 'bank' ? 'bank' : 'euro'} className="" />

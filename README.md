@@ -202,7 +202,7 @@ Every investor action shows "No fee for you: the platform paid it": a relayer su
 | Payouts in a test euro token, held funds and claims, the rounding remainder | Strong identification and the KYC provider (a platform service records the result with the KYC key) |
 | Restricted keys per role; the network rejecting the agent's key | Bank account verification (a mock fingerprint) and the bank transfer itself: a simulated bank partner reports it sent, and the contract (real) then marks it paid |
 | Meta transactions: a relayer pays investors' fees | NEAR Intents delivery: the payout service releases Lena's route and reports the result on testnet, but no USDC is sent. Its 1Click quote is real (a mainnet dry run, nothing sent) |
-| The caretaker agent's model on NEAR AI Cloud, with attestation and signed replies checked | Estate documents |
+| The caretaker agent's model on NEAR AI Cloud, with attestation and signed replies checked (each run checks that the enclave key and a fresh nonce are in the Intel TDX quote and that NVIDIA evidence is present; the certificate chains passed NEAR's open-source [nearai-cloud-verifier](https://github.com/nearai/nearai-cloud-verifier) on Nov 1 and are not re-checked on each run) | Estate documents |
 | A second company (Bloom Foods) using the same verified details | The euro stablecoin: a test token (EURC or similar in production) |
 
 ## Security model

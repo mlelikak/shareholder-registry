@@ -39,8 +39,8 @@ function AttestationDetail({ data }: { data: { attestation?: Attestation[]; proo
           <Proof ok={a.nonceInQuote}>The quote contains our fresh random number, so it was made just now</Proof>
           <Proof ok={a.nvidiaEvidence}>NVIDIA GPU evidence is included</Proof>
           <div className="tiny muted" style={{ marginTop: 4 }}>
-            Model {a.model} · enclave key <code>{a.signingAddress.slice(0, 12)}…</code> · the Intel and NVIDIA certificate chains are checked with
-            NEAR&apos;s open-source verifier (see README)
+            Model {a.model} · enclave key <code>{a.signingAddress.slice(0, 12)}…</code> · the Intel and NVIDIA certificate chains are not re-checked here; they
+            passed NEAR&apos;s open-source verifier (<a href="https://github.com/nearai/nearai-cloud-verifier" target="_blank" rel="noreferrer">nearai-cloud-verifier</a>) on Nov 1, and anyone can run it again
           </div>
         </>
       )}
